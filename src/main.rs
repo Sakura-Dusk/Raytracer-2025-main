@@ -1,7 +1,8 @@
 mod vec3;
 
 use console::style;
-use image::error::UnsupportedErrorKind::Color as OtherColor;
+use std::ops::Sub;
+// use image::error::UnsupportedErrorKind::{Color as OtherColor, Color};
 use image::{ImageBuffer, Rgb, RgbImage};
 use indicatif::ProgressBar;
 
@@ -9,7 +10,7 @@ use crate::vec3::ray::Ray;
 use vec3::ray;
 
 fn main() {
-    let path = std::path::Path::new("output/book1/image2.png");
+    let path = std::path::Path::new("output/book1/image3.png");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -107,7 +108,22 @@ fn image_setup() -> (u32, u32) {
     (image_width, image_height)
 }
 
-fn ray_color(r: &ray::Ray) -> Color {
+fn ray_color(r: &Ray) -> Color {
+    if hit_sphere(
+        &vec3::Point3 {
+            x: 0.0,
+            y: 0.0,
+            z: -1.0,
+        },
+        0.5,
+        r,
+    ) {
+        return Color {
+            x: 1.0,
+            y: 0.0,
+            z: 0.0,
+        };
+    }
     let unit_direction = vec3::unit_vector(&r.direction);
     let a = 0.5 * (unit_direction.y + 1.0);
     (1.0 - a)
@@ -121,4 +137,13 @@ fn ray_color(r: &ray::Ray) -> Color {
             y: 0.7,
             z: 1.0,
         }
+}
+
+fn hit_sphere(center: &vec3::Point3, radius: f64, r: &Ray) -> bool {
+    let oc = *center - r.origin;
+    let a = vec3::dot(&r.direction, &r.direction);
+    let b = -2.0 * vec3::dot(&r.direction, &oc);
+    let c = vec3::dot(&oc, &oc) - radius * radius;
+    let discriminant = b * b - 4.0 * a * c;
+    discriminant >= 0.0
 }
