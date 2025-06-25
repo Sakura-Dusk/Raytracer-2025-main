@@ -1,16 +1,14 @@
 mod vec3;
 
 use console::style;
-use std::ops::Sub;
-// use image::error::UnsupportedErrorKind::{Color as OtherColor, Color};
 use image::{ImageBuffer, Rgb, RgbImage};
 use indicatif::ProgressBar;
 
 use crate::vec3::ray::Ray;
-use vec3::ray;
+use crate::vec3::{Vec3, unit_vector};
 
 fn main() {
-    let path = std::path::Path::new("output/book1/image3.png");
+    let path = std::path::Path::new("output/book1/image4.png");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -37,12 +35,12 @@ fn main() {
         z: 0.0,
     };
 
-    let viewport_u = vec3::Vec3 {
+    let viewport_u = Vec3 {
         x: view_point_width,
         y: 0.0,
         z: 0.0,
     };
-    let viewport_v = vec3::Vec3 {
+    let viewport_v = Vec3 {
         x: 0.0,
         y: -view_point_height,
         z: 0.0,
@@ -52,7 +50,7 @@ fn main() {
     let pixel_delta_v = viewport_v / (image_height as f64);
 
     let viewport_upper_left = camera_center
-        - vec3::Vec3 {
+        - Vec3 {
             x: 0.0,
             y: 0.0,
             z: focal_length,
@@ -89,7 +87,7 @@ fn main() {
     img.save(path).expect("Cannot save the image to the file");
 }
 
-type Color = vec3::Vec3;
+type Color = Vec3;
 fn write_color(pixel: &mut Rgb<u8>, pixel_color: &Color) {
     let r: f64 = pixel_color.x * 255.999;
     let g: f64 = pixel_color.y * 255.999;
@@ -109,7 +107,7 @@ fn image_setup() -> (u32, u32) {
 }
 
 fn ray_color(r: &Ray) -> Color {
-    if hit_sphere(
+    let t = hit_sphere(
         &vec3::Point3 {
             x: 0.0,
             y: 0.0,
@@ -117,14 +115,24 @@ fn ray_color(r: &Ray) -> Color {
         },
         0.5,
         r,
-    ) {
-        return Color {
-            x: 1.0,
-            y: 0.0,
-            z: 0.0,
-        };
+    );
+    if t > 0.0 {
+        let n = unit_vector(
+            &(r.at(t)
+                - Vec3 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: -1.0,
+                }),
+        );
+        return 0.5
+            * Color {
+                x: n.x + 1.0,
+                y: n.y + 1.0,
+                z: n.z + 1.0,
+            };
     }
-    let unit_direction = vec3::unit_vector(&r.direction);
+    let unit_direction = unit_vector(&r.direction);
     let a = 0.5 * (unit_direction.y + 1.0);
     (1.0 - a)
         * Color {
@@ -139,11 +147,16 @@ fn ray_color(r: &Ray) -> Color {
         }
 }
 
-fn hit_sphere(center: &vec3::Point3, radius: f64, r: &Ray) -> bool {
+fn hit_sphere(center: &vec3::Point3, radius: f64, r: &Ray) -> f64 {
     let oc = *center - r.origin;
     let a = vec3::dot(&r.direction, &r.direction);
     let b = -2.0 * vec3::dot(&r.direction, &oc);
     let c = vec3::dot(&oc, &oc) - radius * radius;
     let discriminant = b * b - 4.0 * a * c;
-    discriminant >= 0.0
+
+    if discriminant < 0.0 {
+        -1.0
+    } else {
+        (-b - discriminant.sqrt()) / (2.0 * a)
+    }
 }
