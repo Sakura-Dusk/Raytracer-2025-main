@@ -2,9 +2,9 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub};
 
 #[derive(Debug)]
 pub struct Vec3 {
-    pub x : f64,
-    pub y : f64,
-    pub z : f64,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 impl Vec3 {
     fn new(x: f64, y: f64, z: f64) -> Self {
@@ -106,8 +106,8 @@ fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
 fn unit_vector(v: &Vec3) -> Vec3 {
     let len = v.length();
     Vec3 {
-        x : v.x / len,
-        y : v.y / len,
-        z : v.z / len,
+        x: v.x / len,
+        y: v.y / len,
+        z: v.z / len,
     }
 }

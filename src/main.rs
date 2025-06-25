@@ -25,9 +25,9 @@ fn main() {
         for i in 0..width {
             let pixel = img.get_pixel_mut(i, j);
             let pixel_color = Color {
-                x : (i as f64) / ((width - 1) as f64),
-                y : (j as f64) / ((height - 1) as f64),
-                z : 0.0,
+                x: (i as f64) / ((width - 1) as f64),
+                y: (j as f64) / ((height - 1) as f64),
+                z: 0.0,
             };
             write_color(pixel, &pixel_color);
             // let r: f64 = (i as f64) / ((width - 1) as f64) * 255.999;
@@ -47,9 +47,9 @@ fn main() {
 }
 
 type Color = vec3::Vec3;
-fn write_color(pixel : &mut Rgb<u8>, pixel_color : &Color) {
-    let r : f64 = pixel_color.x * 255.999;
-    let g : f64 = pixel_color.y * 255.999;
-    let b : f64 = pixel_color.z * 255.999;
-    *pixel = Rgb([r as u8,g as u8,b as u8]);
+fn write_color(pixel: &mut Rgb<u8>, pixel_color: &Color) {
+    let r: f64 = pixel_color.x * 255.999;
+    let g: f64 = pixel_color.y * 255.999;
+    let b: f64 = pixel_color.z * 255.999;
+    *pixel = Rgb([r as u8, g as u8, b as u8]);
 }
