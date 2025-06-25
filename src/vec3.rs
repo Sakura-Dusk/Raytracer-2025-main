@@ -11,16 +11,16 @@ impl Vec3 {
         Self { x, y, z }
     }
 
-    fn length(&self) -> f64 {
-        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
-    }
-
-    fn length_squared(&self) -> f64 {
-        self.x * self.x + self.y * self.y + self.z * self.z
-    }
+    // fn length(&self) -> f64 {
+    //     (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+    // }
+    // 
+    // fn length_squared(&self) -> f64 {
+    //     self.x * self.x + self.y * self.y + self.z * self.z
+    // }
 }
 
-type Point3 = Vec3;
+// type Point3 = Vec3;
 
 impl Neg for Vec3 {
     type Output = Self;
@@ -91,23 +91,23 @@ impl DivAssign<f64> for Vec3 {
     }
 }
 
-fn dot(u: &Vec3, v: &Vec3) -> f64 {
-    u.x * v.x + u.y * v.y + u.z * v.z
-}
-
-fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
-    Vec3::new(
-        u.y * v.z - u.z * v.y,
-        u.z * v.x - u.x * v.z,
-        u.x * v.y - u.y * v.x,
-    )
-}
-
-fn unit_vector(v: &Vec3) -> Vec3 {
-    let len = v.length();
-    Vec3 {
-        x: v.x / len,
-        y: v.y / len,
-        z: v.z / len,
-    }
-}
+// fn dot(u: &Vec3, v: &Vec3) -> f64 {
+//     u.x * v.x + u.y * v.y + u.z * v.z
+// }
+// 
+// fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
+//     Vec3::new(
+//         u.y * v.z - u.z * v.y,
+//         u.z * v.x - u.x * v.z,
+//         u.x * v.y - u.y * v.x,
+//     )
+// }
+// 
+// fn unit_vector(v: &Vec3) -> Vec3 {
+//     let len = v.length();
+//     Vec3 {
+//         x: v.x / len,
+//         y: v.y / len,
+//         z: v.z / len,
+//     }
+// }
