@@ -5,7 +5,6 @@ use console::style;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use rtweekend::color;
-use rtweekend::vec3;
 use rtweekend::vec3::ray::Ray;
 use rtweekend::vec3::{Vec3, unit_vector};
 
@@ -13,6 +12,7 @@ use crate::hittable::Hittable;
 use crate::rtweekend::vec3::Point3;
 use hittable::hittable_list;
 use hittable::sphere;
+use crate::rtweekend::interval::Interval;
 
 fn main() {
     let path = std::path::Path::new("output/book1/image5.png");
@@ -112,7 +112,7 @@ fn image_setup() -> (u32, u32) {
 
 fn ray_color(r: &Ray, world: &dyn Hittable) -> color::Color {
     let mut rec: hittable::HitRecord = hittable::HitRecord::new();
-    if world.hit(&r, 0.0, f64::INFINITY, &mut rec) {
+    if world.hit(&r, &Interval::new(0.0, f64::INFINITY), &mut rec) {
         return 0.5 * (rec.normal + color::Color::new(1.0, 1.0, 1.0));
     }
 

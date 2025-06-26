@@ -1,4 +1,5 @@
 use crate::hittable::{HitRecord, Hittable};
+use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3;
 use crate::rtweekend::vec3::Vec3;
 use crate::rtweekend::vec3::ray::Ray;
@@ -9,7 +10,7 @@ pub(crate) struct Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, r: &Ray, ray_t_min: f64, ray_t_max: f64, rec: &mut HitRecord) -> bool {
+    fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
         let oc = self.center - r.origin;
         let a = r.direction.length_squared();
         let h = vec3::dot(&r.direction, &oc);
@@ -24,9 +25,9 @@ impl Hittable for Sphere {
         let sqrtd = discriminant.sqrt();
 
         let root = (h - sqrtd) / a; //find small root first
-        if root <= ray_t_min || ray_t_max <= root {
+        if !ray_t.surrounds(root) {
             let root = (h + sqrtd) / a;
-            if root <= ray_t_min || ray_t_max <= root {
+            if !ray_t.surrounds(root) {
                 return false;
             }
         }

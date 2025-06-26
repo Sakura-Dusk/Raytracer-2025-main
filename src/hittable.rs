@@ -5,6 +5,7 @@ use crate::rtweekend::vec3;
 
 use crate::rtweekend::vec3::dot;
 use crate::rtweekend::vec3::ray;
+use crate::rtweekend::interval;
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct HitRecord {
@@ -35,5 +36,5 @@ impl HitRecord {
 }
 
 pub trait Hittable {
-    fn hit(&self, r: &ray::Ray, ray_t_min: f64, ray_t_max: f64, rec: &mut HitRecord) -> bool;
+    fn hit(&self, r: &ray::Ray, ray_t: &interval::Interval, rec: &mut HitRecord) -> bool;
 }

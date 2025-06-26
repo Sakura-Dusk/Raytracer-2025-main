@@ -1,5 +1,6 @@
 pub(crate) mod color;
 pub mod vec3;
+pub(crate) mod interval;
 
 // const INFINITY:f64 = f64::INFINITY;
 const PI: f64 = std::f64::consts::PI;
