@@ -1,4 +1,4 @@
-use crate::vec3::{Point3, Vec3};
+use crate::rtweekend::vec3::{Point3, Vec3};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Ray {

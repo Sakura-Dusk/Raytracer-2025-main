@@ -1,0 +1,41 @@
+use crate::hittable::{HitRecord, Hittable};
+use crate::rtweekend::vec3;
+use crate::rtweekend::vec3::Vec3;
+use crate::rtweekend::vec3::ray::Ray;
+
+pub(crate) struct Sphere {
+    pub(crate) center: Vec3,
+    pub(crate) radius: f64,
+}
+
+impl Hittable for Sphere {
+    fn hit(&self, r: &Ray, ray_t_min: f64, ray_t_max: f64, rec: &mut HitRecord) -> bool {
+        let oc = self.center - r.origin;
+        let a = r.direction.length_squared();
+        let h = vec3::dot(&r.direction, &oc);
+        let c = oc.length_squared() - self.radius * self.radius;
+
+        let discriminant = h * h - a * c;
+
+        if discriminant < 0.0 {
+            return false;
+        }
+
+        let sqrtd = discriminant.sqrt();
+
+        let root = (h - sqrtd) / a; //find small root first
+        if root <= ray_t_min || ray_t_max <= root {
+            let root = (h + sqrtd) / a;
+            if root <= ray_t_min || ray_t_max <= root {
+                return false;
+            }
+        }
+
+        rec.t = root;
+        rec.p = r.at(rec.t);
+        let outward_normal = (rec.p - self.center) / self.radius;
+        rec.set_face_normal(r, &outward_normal);
+
+        true
+    }
+}

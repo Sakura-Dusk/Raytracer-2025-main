@@ -1,19 +1,24 @@
-mod vec3;
+mod hittable;
+mod rtweekend;
 
 use console::style;
-use image::{ImageBuffer, Rgb, RgbImage};
+use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
+use rtweekend::color;
+use rtweekend::vec3;
+use rtweekend::vec3::ray::Ray;
+use rtweekend::vec3::{Vec3, unit_vector};
 
-use crate::vec3::ray::Ray;
-use crate::vec3::{Vec3, unit_vector};
+use crate::hittable::Hittable;
+use crate::rtweekend::vec3::Point3;
+use hittable::hittable_list;
+use hittable::sphere;
 
 fn main() {
-    let path = std::path::Path::new("output/book1/image4.png");
+    let path = std::path::Path::new("output/book1/image5.png");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
-    // let width = 256;
-    // let height = 256;
     let (image_width, image_height) = image_setup();
     // different from the book, we use image crate to create a .png image rather than outputting .ppm file, which is not widely used.
     // anyway, you may output any image format you like.
@@ -25,11 +30,22 @@ fn main() {
         ProgressBar::new((image_height * image_width) as u64)
     };
 
+    //World build
+    let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
+    world.add(Box::new(sphere::Sphere {
+        center: Vec3::new(0.0, 0.0, -1.0),
+        radius: 0.5,
+    }));
+    world.add(Box::new(sphere::Sphere {
+        center: Vec3::new(0.0, -100.5, -1.0),
+        radius: 100.0,
+    }));
+
     //set Camera
     let view_point_height = 2.0;
     let view_point_width = view_point_height * (image_width as f64 / image_height as f64);
     let focal_length = 1.0; //the distance between camera and item
-    let camera_center = vec3::Point3 {
+    let camera_center = Point3 {
         x: 0.0,
         y: 0.0,
         z: 0.0,
@@ -69,12 +85,8 @@ fn main() {
             let ray_direction = pixel_center - camera_center;
             let r = Ray::new(camera_center, ray_direction);
 
-            let pixel_color = ray_color(&r);
-            write_color(pixel, &pixel_color);
-            // let r: f64 = (i as f64) / ((width - 1) as f64) * 255.999;
-            // let g: f64 = (j as f64) / ((height - 1) as f64) * 255.999;
-            // let b: f64 = 0.0 * 255.999;
-            // *pixel = image::Rgb([r as u8, g as u8, b as u8]);
+            let pixel_color = ray_color(&r, &world);
+            color::write_color(pixel, &pixel_color);
         }
         progress.inc(1);
     }
@@ -85,14 +97,6 @@ fn main() {
         style(path.to_str().unwrap()).yellow()
     );
     img.save(path).expect("Cannot save the image to the file");
-}
-
-type Color = Vec3;
-fn write_color(pixel: &mut Rgb<u8>, pixel_color: &Color) {
-    let r: f64 = pixel_color.x * 255.999;
-    let g: f64 = pixel_color.y * 255.999;
-    let b: f64 = pixel_color.z * 255.999;
-    *pixel = Rgb([r as u8, g as u8, b as u8]);
 }
 
 fn image_setup() -> (u32, u32) {
@@ -106,57 +110,23 @@ fn image_setup() -> (u32, u32) {
     (image_width, image_height)
 }
 
-fn ray_color(r: &Ray) -> Color {
-    let t = hit_sphere(
-        &vec3::Point3 {
-            x: 0.0,
-            y: 0.0,
-            z: -1.0,
-        },
-        0.5,
-        r,
-    );
-    if t > 0.0 {
-        let n = unit_vector(
-            &(r.at(t)
-                - Vec3 {
-                    x: 0.0,
-                    y: 0.0,
-                    z: -1.0,
-                }),
-        );
-        return 0.5
-            * Color {
-                x: n.x + 1.0,
-                y: n.y + 1.0,
-                z: n.z + 1.0,
-            };
+fn ray_color(r: &Ray, world: &dyn Hittable) -> color::Color {
+    let mut rec: hittable::HitRecord = hittable::HitRecord::new();
+    if world.hit(&r, 0.0, f64::INFINITY, &mut rec) {
+        return 0.5 * (rec.normal + color::Color::new(1.0, 1.0, 1.0));
     }
+
     let unit_direction = unit_vector(&r.direction);
     let a = 0.5 * (unit_direction.y + 1.0);
     (1.0 - a)
-        * Color {
+        * color::Color {
             x: 1.0,
             y: 1.0,
             z: 1.0,
         }
-        + a * Color {
+        + a * color::Color {
             x: 0.5,
             y: 0.7,
             z: 1.0,
         }
-}
-
-fn hit_sphere(center: &vec3::Point3, radius: f64, r: &Ray) -> f64 {
-    let oc = *center - r.origin;
-    let a = r.direction.length_squared();
-    let h = vec3::dot(&r.direction, &oc);
-    let c = oc.length_squared() - radius * radius;
-    let discriminant = h * h - a * c;
-
-    if discriminant < 0.0 {
-        -1.0
-    } else {
-        (h - discriminant.sqrt()) / a
-    }
 }
