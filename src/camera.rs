@@ -2,7 +2,7 @@ use crate::hittable::Hittable;
 use crate::rtweekend::color;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
-use crate::rtweekend::vec3::{Point3, Vec3, unit_vector};
+use crate::rtweekend::vec3::{Point3, Vec3, random_on_hemisphere, unit_vector};
 use crate::{hittable, rtweekend};
 use console::style;
 use image::{ImageBuffer, RgbImage};
@@ -103,10 +103,11 @@ impl Camera {
         Ray::new(ray_origin, ray_direction)
     }
 
-    fn ray_color(r: &Ray, world: &dyn Hittable) -> color::Color {
+    fn ray_color(&self, r: &Ray, world: &dyn Hittable) -> color::Color {
         let mut rec: hittable::HitRecord = hittable::HitRecord::new();
         if world.hit(&r, &Interval::new(0.0, f64::INFINITY), &mut rec) {
-            return 0.5 * (rec.normal + color::Color::new(1.0, 1.0, 1.0));
+            let direction = random_on_hemisphere(&rec.normal);
+            return 0.5 * self.ray_color(&Ray::new(rec.p, direction), world);
         }
 
         let unit_direction = unit_vector(&r.direction);
@@ -127,7 +128,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book1/image6.png");
+        let path = std::path::Path::new("output/book1/image7.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -149,9 +150,9 @@ impl Camera {
                 let mut pixel_color = color::Color::new(0.0, 0.0, 0.0);
                 for sample in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color += Self::ray_color(&r, world);
+                    pixel_color += self.ray_color(&r, world);
                 }
-                pixel_color = pixel_color * self.pixel_samples_scale as f64;
+                pixel_color = pixel_color * self.pixel_samples_scale;
                 color::write_color(pixel, &pixel_color);
             }
             progress.inc(1);

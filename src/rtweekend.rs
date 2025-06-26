@@ -14,7 +14,7 @@ pub(crate) fn random_double() -> f64 {
     rand::random::<f64>()
 }
 
-fn ramdom_double(min: f64, max: f64) -> f64 {
+pub(crate) fn random_double_range(min: f64, max: f64) -> f64 {
     //Return a random real in [min,max)
     rand::random::<f64>() * (max - min) + min
 }

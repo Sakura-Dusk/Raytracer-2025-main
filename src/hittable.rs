@@ -9,7 +9,7 @@ use crate::rtweekend::vec3::ray;
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct HitRecord {
-    p: vec3::Point3,
+    pub(crate) p: vec3::Point3,
     pub(crate) normal: vec3::Vec3,
     t: f64,
     front_face: bool,
