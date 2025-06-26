@@ -12,6 +12,7 @@ pub(crate) struct Camera {
     pub aspect_ratio: f64,      //default in 1.0
     pub image_width: u32,       //default in 100
     pub samples_per_pixel: u32, //default in 10
+    pub max_depth: i32,         // default in 10
 
     image_height: u32,
     pixel_samples_scale: f64,
@@ -27,6 +28,7 @@ impl Camera {
             aspect_ratio: 1.0,
             image_width: 100,
             samples_per_pixel: 10,
+            max_depth: 10,
             image_height: 0,
             pixel_samples_scale: 0.0,
             center: Point3::new(0.0, 0.0, 0.0),
@@ -103,11 +105,15 @@ impl Camera {
         Ray::new(ray_origin, ray_direction)
     }
 
-    fn ray_color(&self, r: &Ray, world: &dyn Hittable) -> color::Color {
+    fn ray_color(&self, r: &Ray, depth: i32, world: &dyn Hittable) -> color::Color {
+        if depth <= 0 {
+            return color::Color::new(0.0, 0.0, 0.0);
+        }
+
         let mut rec: hittable::HitRecord = hittable::HitRecord::new();
         if world.hit(&r, &Interval::new(0.0, f64::INFINITY), &mut rec) {
             let direction = random_on_hemisphere(&rec.normal);
-            return 0.5 * self.ray_color(&Ray::new(rec.p, direction), world);
+            return 0.5 * self.ray_color(&Ray::new(rec.p, direction), depth - 1, world);
         }
 
         let unit_direction = unit_vector(&r.direction);
@@ -128,7 +134,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book1/image7.png");
+        let path = std::path::Path::new("output/book1/image8.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -150,7 +156,7 @@ impl Camera {
                 let mut pixel_color = color::Color::new(0.0, 0.0, 0.0);
                 for sample in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color += self.ray_color(&r, world);
+                    pixel_color += self.ray_color(&r, self.max_depth, world);
                 }
                 pixel_color = pixel_color * self.pixel_samples_scale;
                 color::write_color(pixel, &pixel_color);
