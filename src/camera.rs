@@ -105,7 +105,7 @@ impl Camera {
         Ray::new(ray_origin, ray_direction)
     }
 
-    fn ray_color(&self, r: &Ray, depth: i32, world: &dyn Hittable) -> color::Color {
+    fn ray_color(&self, r: &Ray, depth: i32, world: &dyn Hittable, rate: f64) -> color::Color {
         if depth <= 0 {
             return color::Color::new(0.0, 0.0, 0.0);
         }
@@ -113,7 +113,7 @@ impl Camera {
         let mut rec: hittable::HitRecord = hittable::HitRecord::new();
         if world.hit(&r, &Interval::new(0.001, f64::INFINITY), &mut rec) {
             let direction = rec.normal + random_unit_vector();
-            return 0.5 * self.ray_color(&Ray::new(rec.p, direction), depth - 1, world);
+            return rate * self.ray_color(&Ray::new(rec.p, direction), depth - 1, world, rate);
         }
 
         let unit_direction = unit_vector(&r.direction);
@@ -134,7 +134,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book1/image10.png");
+        let path = std::path::Path::new("output/book1/image11.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -156,7 +156,19 @@ impl Camera {
                 let mut pixel_color = color::Color::new(0.0, 0.0, 0.0);
                 for sample in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color += self.ray_color(&r, self.max_depth, world);
+                    let mut rate = 1.0;
+                    if i * 5 <= self.image_width {
+                        rate = 0.1;
+                    } else if i * 5 <= self.image_width * 2 {
+                        rate = 0.3;
+                    } else if i * 5 <= self.image_width * 3 {
+                        rate = 0.5;
+                    } else if i * 5 <= self.image_width * 4 {
+                        rate = 0.7;
+                    } else {
+                        rate = 0.9;
+                    }
+                    pixel_color += self.ray_color(&r, self.max_depth, world, rate);
                 }
                 pixel_color = pixel_color * self.pixel_samples_scale;
                 color::write_color(pixel, &pixel_color);
