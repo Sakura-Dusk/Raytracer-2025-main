@@ -1,16 +1,19 @@
 pub(crate) mod hittable_list;
 pub(crate) mod sphere;
 
+use crate::material::Lambertian;
 use crate::rtweekend::vec3;
+use std::rc::Rc;
 
 use crate::rtweekend::interval;
 use crate::rtweekend::vec3::dot;
 use crate::rtweekend::vec3::ray;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Clone)]
 pub(crate) struct HitRecord {
     pub(crate) p: vec3::Point3,
     pub(crate) normal: vec3::Vec3,
+    pub mat: Rc<dyn super::Material>,
     t: f64,
     front_face: bool,
 }
@@ -18,8 +21,9 @@ pub(crate) struct HitRecord {
 impl HitRecord {
     pub fn new() -> HitRecord {
         HitRecord {
-            p: vec3::Point3::new(0.0, 0.0, 0.0),
-            normal: vec3::Vec3::new(0.0, 0.0, 0.0),
+            p: vec3::Point3::default(),
+            normal: vec3::Vec3::default(),
+            mat: Rc::new(Lambertian::default()),
             t: 0.0,
             front_face: false,
         }

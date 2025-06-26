@@ -1,4 +1,4 @@
-use crate::hittable::{HitRecord, Hittable};
+use crate::material::hittable::{HitRecord, Hittable};
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
 

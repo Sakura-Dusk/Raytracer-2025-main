@@ -1,9 +1,10 @@
-use crate::hittable::Hittable;
+use crate::material::hittable;
+use crate::material::hittable::Hittable;
+use crate::rtweekend;
 use crate::rtweekend::color;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
-use crate::rtweekend::vec3::{Point3, Vec3, random_on_hemisphere, random_unit_vector, unit_vector};
-use crate::{hittable, rtweekend};
+use crate::rtweekend::vec3::{Point3, Vec3, unit_vector};
 use console::style;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
@@ -112,8 +113,12 @@ impl Camera {
 
         let mut rec: hittable::HitRecord = hittable::HitRecord::new();
         if world.hit(&r, &Interval::new(0.001, f64::INFINITY), &mut rec) {
-            let direction = rec.normal + random_unit_vector();
-            return rate * self.ray_color(&Ray::new(rec.p, direction), depth - 1, world, rate);
+            let mut scattered = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
+            let mut attenuation = color::Color::new(1.0, 1.0, 1.0);
+            if rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
+                return attenuation * self.ray_color(&scattered, depth - 1, world, rate);
+            }
+            return color::Color::new(0.0, 0.0, 0.0);
         }
 
         let unit_direction = unit_vector(&r.direction);
@@ -134,7 +139,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book1/image12.png");
+        let path = std::path::Path::new("output/book1/image13.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -156,18 +161,7 @@ impl Camera {
                 let mut pixel_color = color::Color::new(0.0, 0.0, 0.0);
                 for sample in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    let mut rate = 1.0;
-                    if i * 5 <= self.image_width {
-                        rate = 0.1;
-                    } else if i * 5 <= self.image_width * 2 {
-                        rate = 0.3;
-                    } else if i * 5 <= self.image_width * 3 {
-                        rate = 0.5;
-                    } else if i * 5 <= self.image_width * 4 {
-                        rate = 0.7;
-                    } else {
-                        rate = 0.9;
-                    }
+                    let rate = 0.5;
                     pixel_color += self.ray_color(&r, self.max_depth, world, rate);
                 }
                 pixel_color = pixel_color * self.pixel_samples_scale;

@@ -4,7 +4,7 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub};
 
 pub mod ray;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -21,6 +21,11 @@ impl Vec3 {
 
     pub(crate) fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
+    }
+
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
     }
 
     pub fn random() -> Vec3 {
@@ -145,4 +150,8 @@ pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
     } else {
         -on_unit_sphere
     }
+}
+
+pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+    *v - 2f64 * dot(v, n) * *n
 }
