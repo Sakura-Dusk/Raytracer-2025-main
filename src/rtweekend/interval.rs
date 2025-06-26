@@ -6,21 +6,37 @@ pub(crate) struct Interval {
 impl Interval {
     //in Default should be [INFINITY,NEG_INFINITY]
     pub(crate) fn new(min: f64, max: f64) -> Self {
-        Interval {min, max}
+        Interval { min, max }
     }
 
     fn size(&self) -> f64 {
         self.max - self.min
     }
 
-    fn contains(&self, x:f64) -> bool {
+    fn contains(&self, x: f64) -> bool {
         self.min <= x && x <= self.max
     }
 
-    pub(crate) fn surrounds(&self, x:f64) -> bool {
+    pub(crate) fn surrounds(&self, x: f64) -> bool {
         self.min < x && x < self.max
     }
 
-    const EMPTY:Interval = Interval {min:f64::INFINITY, max:f64::NEG_INFINITY};
-    const UNIVERSE:Interval = Interval {min:f64::NEG_INFINITY, max:f64::INFINITY};
+    pub fn clamp(&self, x: f64) -> f64 {
+        if x < self.min {
+            return self.min;
+        }
+        if x > self.max {
+            return self.max;
+        }
+        x
+    }
+
+    const EMPTY: Interval = Interval {
+        min: f64::INFINITY,
+        max: f64::NEG_INFINITY,
+    };
+    const UNIVERSE: Interval = Interval {
+        min: f64::NEG_INFINITY,
+        max: f64::INFINITY,
+    };
 }

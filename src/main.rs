@@ -1,12 +1,12 @@
+mod camera;
 mod hittable;
 mod rtweekend;
-mod camera;
 
-use rtweekend::vec3::{Vec3};
+use rtweekend::vec3::Vec3;
 
+use crate::camera::Camera;
 use hittable::hittable_list;
 use hittable::sphere;
-use crate::camera::Camera;
 
 fn main() {
     //World build
@@ -20,9 +20,10 @@ fn main() {
         radius: 100.0,
     }));
 
-    let mut cam:Camera = Camera::new();
+    let mut cam: Camera = Camera::new();
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 400;
+    cam.samples_per_pixel = 100;
 
     cam.render(&world);
 }

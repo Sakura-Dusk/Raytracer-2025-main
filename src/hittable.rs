@@ -3,9 +3,9 @@ pub(crate) mod sphere;
 
 use crate::rtweekend::vec3;
 
+use crate::rtweekend::interval;
 use crate::rtweekend::vec3::dot;
 use crate::rtweekend::vec3::ray;
-use crate::rtweekend::interval;
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct HitRecord {
