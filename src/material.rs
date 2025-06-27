@@ -15,6 +15,10 @@ pub trait Material {
     ) -> bool;
 }
 
+impl dyn Material {
+    pub(crate) fn new() {}
+}
+
 pub(crate) struct Lambertian {
     albedo: Color,
 }

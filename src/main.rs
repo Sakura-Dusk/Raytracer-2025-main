@@ -2,64 +2,90 @@ mod camera;
 mod material;
 mod rtweekend;
 
-use rtweekend::vec3::Vec3;
-use std::rc::Rc;
-
 use crate::camera::Camera;
 use crate::material::hittable::sphere;
-use crate::rtweekend::color;
+use crate::material::hittable::sphere::Sphere;
+use crate::material::{Dielectric, Lambertian, Material, Metal};
+use crate::rtweekend::color::Color;
+use crate::rtweekend::random_double;
+use crate::rtweekend::random_double_range;
 use crate::rtweekend::vec3::Point3;
 use material::hittable::hittable_list;
+use rtweekend::vec3::Vec3;
+use std::rc::Rc;
 
 fn main() {
     //World build
     let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
 
-    let material_ground = Rc::new(material::Lambertian::new(&color::Color::new(0.8, 0.8, 0.0)));
-    let material_center = Rc::new(material::Lambertian::new(&color::Color::new(0.1, 0.2, 0.5)));
-    let material_left = Rc::new(material::Dielectric::new(1.50));
-    let material_bubble = Rc::new(material::Dielectric::new(1.00 / 1.50));
-    let material_right = Rc::new(material::Metal::new(&color::Color::new(0.8, 0.6, 0.2), 1.0));
+    let ground_material = Rc::new(Lambertian::new(&Color::new(0.5, 0.5, 0.5)));
+    world.add(Box::new(Sphere::new(
+        Point3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    )));
 
-    world.add(Box::new(sphere::Sphere {
-        center: Vec3::new(0.0, -100.5, -1.0),
-        radius: 100.0,
-        mat: material_ground,
-    }));
-    world.add(Box::new(sphere::Sphere {
-        center: Vec3::new(0.0, 0.0, -1.2),
-        radius: 0.5,
-        mat: material_center,
-    }));
-    world.add(Box::new(sphere::Sphere {
-        center: Vec3::new(-1.0, 0.0, -1.0),
-        radius: 0.5,
-        mat: material_left,
-    }));
-    world.add(Box::new(sphere::Sphere {
-        center: Vec3::new(-1.0, 0.0, -1.0),
-        radius: 0.4,
-        mat: material_bubble,
-    }));
-    world.add(Box::new(sphere::Sphere {
-        center: Vec3::new(1.0, 0.0, -1.0),
-        radius: 0.5,
-        mat: material_right,
-    }));
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = random_double();
+            let center = Point3::new(
+                a as f64 + 0.9 * random_double(),
+                0.2,
+                b as f64 + 0.9 * random_double(),
+            );
+
+            if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                let sphere_material: Rc<dyn Material> = if choose_mat < 0.8 {
+                    //diffuse
+                    let albedo = Color::random() * Color::random();
+                    Rc::new(Lambertian::new(&albedo))
+                } else if choose_mat < 0.95 {
+                    //metal
+                    let albedo = Color::random_range(0.5, 1.0);
+                    let fuzz = random_double_range(0.0, 0.5);
+                    Rc::new(Metal::new(&albedo, fuzz))
+                } else {
+                    //glass
+                    Rc::new(Dielectric::new(1.5))
+                };
+
+                world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+            }
+        }
+    }
+
+    let material1 = Rc::new(Dielectric::new(1.5));
+    world.add(Box::new(Sphere::new(
+        Point3::new(0.0, 1.0, 0.0),
+        1.0,
+        material1,
+    )));
+    let material2 = Rc::new(Lambertian::new(&Color::new(0.4, 0.2, 0.1)));
+    world.add(Box::new(Sphere::new(
+        Point3::new(-4.0, 1.0, 0.0),
+        1.0,
+        material2,
+    )));
+    let material3 = Rc::new(Metal::new(&Color::new(0.7, 0.6, 0.5), 0.0));
+    world.add(Box::new(Sphere::new(
+        Point3::new(4.0, 1.0, 0.0),
+        1.0,
+        material3,
+    )));
 
     let mut cam: Camera = Camera::new();
     cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 400;
-    cam.samples_per_pixel = 100;
+    cam.image_width = 1200;
+    cam.samples_per_pixel = 500;
     cam.max_depth = 50;
 
     cam.vfov = 20.0;
-    cam.lookfrom = Point3::new(-2.0, 2.0, 1.0);
-    cam.lookat = Point3::new(0.0, 0.0, -1.0);
+    cam.lookfrom = Point3::new(13.0, 2.0, 3.0);
+    cam.lookat = Point3::new(0.0, 0.0, 0.0);
     cam.vup = Vec3::new(0.0, 1.0, 0.0);
 
-    cam.defocus_angle = 10.0;
-    cam.focus_dist = 3.4;
+    cam.defocus_angle = 0.6;
+    cam.focus_dist = 10.0;
 
     cam.render(&world);
 }

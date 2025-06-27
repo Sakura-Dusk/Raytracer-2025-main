@@ -1,5 +1,5 @@
-use crate::material::Material;
 use crate::material::hittable::{HitRecord, Hittable};
+use crate::material::{Lambertian, Material};
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3;
 use crate::rtweekend::vec3::Vec3;
@@ -10,6 +10,16 @@ pub(crate) struct Sphere {
     pub(crate) center: Vec3,
     pub(crate) radius: f64,
     pub(crate) mat: Rc<dyn Material>,
+}
+
+impl Sphere {
+    pub(crate) fn new(center: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
+        Sphere {
+            center,
+            radius,
+            mat,
+        }
+    }
 }
 
 impl Hittable for Sphere {
