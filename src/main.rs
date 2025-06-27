@@ -35,21 +35,28 @@ fn main() {
             );
 
             if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                let sphere_material: Rc<dyn Material> = if choose_mat < 0.8 {
+                if choose_mat < 0.8 {
                     //diffuse
                     let albedo = Color::random() * Color::random();
-                    Rc::new(Lambertian::new(&albedo))
+                    let center2 = center + Vec3::new(0.0, random_double_range(0.0, 0.5), 0.0);
+                    let sphere_material: Rc<dyn Material> = Rc::new(Lambertian::new(&albedo));
+                    world.add(Box::new(Sphere::new_move(
+                        center,
+                        center2,
+                        0.2,
+                        sphere_material,
+                    )));
                 } else if choose_mat < 0.95 {
                     //metal
                     let albedo = Color::random_range(0.5, 1.0);
                     let fuzz = random_double_range(0.0, 0.5);
-                    Rc::new(Metal::new(&albedo, fuzz))
+                    let sphere_material: Rc<dyn Material> = Rc::new(Metal::new(&albedo, fuzz));
+                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
                 } else {
                     //glass
-                    Rc::new(Dielectric::new(1.5))
-                };
-
-                world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                    let sphere_material: Rc<dyn Material> = Rc::new(Dielectric::new(1.5));
+                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                }
             }
         }
     }
@@ -75,8 +82,8 @@ fn main() {
 
     let mut cam: Camera = Camera::new();
     cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 1200;
-    cam.samples_per_pixel = 500;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 100;
     cam.max_depth = 50;
 
     cam.vfov = 20.0;

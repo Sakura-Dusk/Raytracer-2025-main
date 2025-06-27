@@ -49,7 +49,7 @@ impl Material for Lambertian {
             scatter_direction = rec.normal;
         }
 
-        *scattered = Ray::new(rec.p, scatter_direction);
+        *scattered = Ray::new_move(rec.p, scatter_direction, r_in.time);
         *attenuation = self.albedo.clone();
         true
     }
@@ -86,7 +86,7 @@ impl Material for Metal {
     ) -> bool {
         let reflected = reflect(&r_in.direction, &rec.normal);
         let reflected = unit_vector(&reflected) + (self.fuzz * random_unit_vector());
-        *scattered = Ray::new(rec.p, reflected);
+        *scattered = Ray::new_move(rec.p, reflected, r_in.time);
         *attenuation = self.albedo.clone();
         dot(&scattered.direction, &rec.normal) > 0.0
     }
@@ -137,7 +137,7 @@ impl Material for Dielectric {
             direction = refract(&unit_direction, &rec.normal, ri);
         }
 
-        *scattered = Ray::new(rec.p, direction);
+        *scattered = Ray::new_move(rec.p, direction, r_in.time);
         true
     }
 }

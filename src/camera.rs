@@ -4,7 +4,7 @@ use crate::rtweekend;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, random_in_unit_disk, unit_vector};
-use crate::rtweekend::{color, degrees_to_radians, vec3};
+use crate::rtweekend::{color, degrees_to_radians, random_double, vec3};
 use console::style;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
@@ -128,8 +128,9 @@ impl Camera {
             self.defocus_disk_sample()
         };
         let ray_direction = pixel_sample - ray_origin;
+        let ray_time = random_double();
 
-        Ray::new(ray_origin, ray_direction)
+        Ray::new_move(ray_origin, ray_direction, ray_time)
     }
 
     fn ray_color(&self, r: &Ray, depth: i32, world: &dyn Hittable, rate: f64) -> color::Color {
@@ -165,7 +166,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book1/image23.png");
+        let path = std::path::Path::new("output/book2/image1.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -192,8 +193,8 @@ impl Camera {
                 }
                 pixel_color = pixel_color * self.pixel_samples_scale;
                 color::write_color(pixel, &pixel_color);
+                progress.inc(1);
             }
-            progress.inc(1);
         }
         progress.finish();
 
