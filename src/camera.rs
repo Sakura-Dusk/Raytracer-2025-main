@@ -3,8 +3,8 @@ use crate::material::hittable::Hittable;
 use crate::rtweekend;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
-use crate::rtweekend::vec3::{Point3, Vec3, unit_vector};
-use crate::rtweekend::{color, vec3};
+use crate::rtweekend::vec3::{Point3, Vec3, random_in_unit_disk, unit_vector};
+use crate::rtweekend::{color, degrees_to_radians, vec3};
 use console::style;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
@@ -20,6 +20,9 @@ pub(crate) struct Camera {
     pub lookat: Point3,
     pub vup: Vec3,
 
+    pub defocus_angle: f64,
+    pub focus_dist: f64,
+
     image_height: u32,
     pixel_samples_scale: f64,
     center: Point3,
@@ -29,6 +32,8 @@ pub(crate) struct Camera {
     u: Vec3, //Camera frame basis vectors
     v: Vec3,
     w: Vec3,
+    defocus_disk_u: Vec3,
+    defocus_disk_v: Vec3,
 }
 
 impl Camera {
@@ -38,10 +43,15 @@ impl Camera {
             image_width: 100,
             samples_per_pixel: 10,
             max_depth: 10,
+
             vfov: 90.0,
             lookfrom: Point3::new(0.0, 0.0, 0.0),
             lookat: Point3::new(0.0, 0.0, -1.0),
             vup: Vec3::new(0.0, 1.0, 0.0),
+
+            defocus_angle: 0.0,
+            focus_dist: 1.0,
+
             image_height: 0,
             pixel_samples_scale: 0.0,
             center: Point3::new(0.0, 0.0, 0.0),
@@ -51,6 +61,8 @@ impl Camera {
             u: Vec3::new(1.0, 0.0, 0.0),
             v: Vec3::new(0.0, 1.0, 0.0),
             w: Vec3::new(0.0, 0.0, 1.0),
+            defocus_disk_u: Vec3::new(1.0, 0.0, 0.0),
+            defocus_disk_v: Vec3::new(0.0, 1.0, 0.0),
         }
     }
 }
@@ -68,10 +80,9 @@ impl Camera {
 
         self.center = self.lookfrom;
 
-        let focal_length = (self.lookfrom - self.lookat).length(); //the distance between camera and item
-        let theta = rtweekend::degrees_to_radians(self.vfov);
+        let theta = degrees_to_radians(self.vfov);
         let h = (theta / 2.0).tan();
-        let viewport_height = 2.0 * h * focal_length;
+        let viewport_height = 2.0 * h * self.focus_dist;
         let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
 
         self.w = unit_vector(&(self.lookfrom - self.lookat));
@@ -85,8 +96,12 @@ impl Camera {
         self.pixel_delta_v = viewport_v / (self.image_height as f64);
 
         let viewport_upper_left =
-            self.center - (focal_length * self.w) - viewport_u / 2.0 - viewport_v / 2.0;
+            self.center - (self.focus_dist * self.w) - viewport_u / 2.0 - viewport_v / 2.0;
         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+
+        let defocus_radius = self.focus_dist * degrees_to_radians(self.defocus_angle / 2.0).tan();
+        self.defocus_disk_u = self.u * defocus_radius;
+        self.defocus_disk_v = self.v * defocus_radius;
     }
 
     fn sample_square(&self) -> Vec3 {
@@ -97,12 +112,21 @@ impl Camera {
         )
     }
 
+    fn defocus_disk_sample(&self) -> Point3 {
+        let p = random_in_unit_disk();
+        self.center + (p.x * self.defocus_disk_u) + (p.y * self.defocus_disk_v)
+    }
+
     fn get_ray(&self, i: u32, j: u32) -> Ray {
         let offset = self.sample_square();
         let pixel_sample = self.pixel00_loc
             + ((i as f64 + offset.x) * self.pixel_delta_u)
             + ((j as f64 + offset.y) * self.pixel_delta_v);
-        let ray_origin = self.center;
+        let ray_origin = if self.defocus_angle <= 0.0 {
+            self.center
+        } else {
+            self.defocus_disk_sample()
+        };
         let ray_direction = pixel_sample - ray_origin;
 
         Ray::new(ray_origin, ray_direction)
@@ -141,7 +165,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book1/image21.png");
+        let path = std::path::Path::new("output/book1/image22.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
