@@ -1,8 +1,8 @@
 use crate::material::hittable::HitRecord;
 use crate::rtweekend::color::Color;
-use crate::rtweekend::vec3;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{dot, random_unit_vector, reflect, refract, unit_vector};
+use crate::rtweekend::{random_double, vec3};
 
 pub mod hittable;
 pub trait Material {
@@ -96,6 +96,13 @@ impl Dielectric {
     pub(crate) fn new(refraction_index: f64) -> Dielectric {
         Dielectric { refraction_index }
     }
+
+    fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
+        // Use Schlick's approximation for reflectance.
+        let mut r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
+        r0 = r0 * r0;
+        r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
+    }
 }
 
 impl Material for Dielectric {
@@ -120,7 +127,7 @@ impl Material for Dielectric {
         let cannot_refract = ri * sin_theta > 1.0;
         let direction: vec3::Vec3;
 
-        if (cannot_refract) {
+        if (cannot_refract || Dielectric::reflectance(cos_theta, ri) > random_double()) {
             direction = reflect(&unit_direction, &rec.normal);
         } else {
             direction = refract(&unit_direction, &rec.normal, ri);

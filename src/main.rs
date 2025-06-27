@@ -16,7 +16,8 @@ fn main() {
 
     let material_ground = Rc::new(material::Lambertian::new(&color::Color::new(0.8, 0.8, 0.0)));
     let material_center = Rc::new(material::Lambertian::new(&color::Color::new(0.1, 0.2, 0.5)));
-    let material_left = Rc::new(material::Dielectric::new(1.00 / 1.33));
+    let material_left = Rc::new(material::Dielectric::new(1.50));
+    let material_bubble = Rc::new(material::Dielectric::new(1.00 / 1.50));
     let material_right = Rc::new(material::Metal::new(&color::Color::new(0.8, 0.6, 0.2), 1.0));
 
     world.add(Box::new(sphere::Sphere {
@@ -33,6 +34,11 @@ fn main() {
         center: Vec3::new(-1.0, 0.0, -1.0),
         radius: 0.5,
         mat: material_left,
+    }));
+    world.add(Box::new(sphere::Sphere {
+        center: Vec3::new(-1.0, 0.0, -1.0),
+        radius: 0.4,
+        mat: material_bubble,
     }));
     world.add(Box::new(sphere::Sphere {
         center: Vec3::new(1.0, 0.0, -1.0),
