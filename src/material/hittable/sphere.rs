@@ -27,9 +27,9 @@ impl Hittable for Sphere {
 
         let sqrtd = discriminant.sqrt();
 
-        let root = (h - sqrtd) / a; //find small root first
+        let mut root = (h - sqrtd) / a; //find small root first
         if !ray_t.surrounds(root) {
-            let root = (h + sqrtd) / a;
+            root = (h + sqrtd) / a;
             if !ray_t.surrounds(root) {
                 return false;
             }

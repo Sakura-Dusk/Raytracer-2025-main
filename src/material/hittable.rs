@@ -15,7 +15,7 @@ pub(crate) struct HitRecord {
     pub(crate) normal: vec3::Vec3,
     pub mat: Rc<dyn super::Material>,
     t: f64,
-    front_face: bool,
+    pub(crate) front_face: bool,
 }
 
 impl HitRecord {

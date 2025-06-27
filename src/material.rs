@@ -1,7 +1,7 @@
 use crate::material::hittable::HitRecord;
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::ray::Ray;
-use crate::rtweekend::vec3::{dot, random_unit_vector, reflect, unit_vector};
+use crate::rtweekend::vec3::{dot, random_unit_vector, reflect, refract, unit_vector};
 
 pub mod hittable;
 pub trait Material {
@@ -41,7 +41,7 @@ impl Material for Lambertian {
         let mut scatter_direction = rec.normal + random_unit_vector();
 
         if scatter_direction.near_zero() {
-            scatter_direction = -rec.normal;
+            scatter_direction = rec.normal;
         }
 
         *scattered = Ray::new(rec.p, scatter_direction);
@@ -84,5 +84,38 @@ impl Material for Metal {
         *scattered = Ray::new(rec.p, reflected);
         *attenuation = self.albedo.clone();
         dot(&scattered.direction, &rec.normal) > 0.0
+    }
+}
+
+pub(crate) struct Dielectric {
+    refraction_index: f64,
+}
+
+impl Dielectric {
+    pub(crate) fn new(refraction_index: f64) -> Dielectric {
+        Dielectric { refraction_index }
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(
+        &self,
+        r_in: &Ray,
+        rec: &HitRecord,
+        attenuation: &mut Color,
+        scattered: &mut Ray,
+    ) -> bool {
+        *attenuation = Color::new(1.0, 1.0, 1.0);
+        let ri = if rec.front_face {
+            1.0 / self.refraction_index
+        } else {
+            self.refraction_index
+        };
+
+        let unit_direction = unit_vector(&r_in.direction);
+        let refracted = refract(&unit_direction, &rec.normal, ri);
+
+        *scattered = Ray::new(rec.p, refracted);
+        true
     }
 }
