@@ -1,5 +1,6 @@
 use crate::material::hittable::HitRecord;
 use crate::rtweekend::color::Color;
+use crate::rtweekend::vec3;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{dot, random_unit_vector, reflect, refract, unit_vector};
 
@@ -113,9 +114,19 @@ impl Material for Dielectric {
         };
 
         let unit_direction = unit_vector(&r_in.direction);
-        let refracted = refract(&unit_direction, &rec.normal, ri);
+        let cos_theta = dot(&-unit_direction, &rec.normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
-        *scattered = Ray::new(rec.p, refracted);
+        let cannot_refract = ri * sin_theta > 1.0;
+        let direction: vec3::Vec3;
+
+        if (cannot_refract) {
+            direction = reflect(&unit_direction, &rec.normal);
+        } else {
+            direction = refract(&unit_direction, &rec.normal, ri);
+        }
+
+        *scattered = Ray::new(rec.p, direction);
         true
     }
 }
