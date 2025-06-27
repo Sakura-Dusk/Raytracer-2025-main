@@ -1,7 +1,7 @@
 use crate::material::hittable::HitRecord;
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::ray::Ray;
-use crate::rtweekend::vec3::{random_unit_vector, reflect};
+use crate::rtweekend::vec3::{dot, random_unit_vector, reflect, unit_vector};
 
 pub mod hittable;
 pub trait Material {
@@ -41,7 +41,7 @@ impl Material for Lambertian {
         let mut scatter_direction = rec.normal + random_unit_vector();
 
         if scatter_direction.near_zero() {
-            scatter_direction = rec.normal;
+            scatter_direction = -rec.normal;
         }
 
         *scattered = Ray::new(rec.p, scatter_direction);
@@ -52,17 +52,22 @@ impl Material for Lambertian {
 
 pub(crate) struct Metal {
     albedo: Color,
+    fuzz: f64,
 }
 
 impl Metal {
     pub(crate) fn default() -> Metal {
         Metal {
             albedo: Color::default(),
+            fuzz: 0.0,
         }
     }
 
-    pub(crate) fn new(x: &Color) -> Metal {
-        Metal { albedo: x.clone() }
+    pub(crate) fn new(x: &Color, fuzz: f64) -> Metal {
+        Metal {
+            albedo: x.clone(),
+            fuzz: if fuzz < 1.0 { fuzz } else { 1.0 },
+        }
     }
 }
 
@@ -75,8 +80,9 @@ impl Material for Metal {
         scattered: &mut Ray,
     ) -> bool {
         let reflected = reflect(&r_in.direction, &rec.normal);
+        let reflected = unit_vector(&reflected) + (self.fuzz * random_unit_vector());
         *scattered = Ray::new(rec.p, reflected);
         *attenuation = self.albedo.clone();
-        true
+        dot(&scattered.direction, &rec.normal) > 0.0
     }
 }
