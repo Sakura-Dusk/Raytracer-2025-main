@@ -15,6 +15,8 @@ pub(crate) struct Camera {
     pub samples_per_pixel: u32, //default in 10
     pub max_depth: i32,         // default in 10
 
+    pub vfov: f64, // Vertical view angle (field of view)
+
     image_height: u32,
     pixel_samples_scale: f64,
     center: Point3,
@@ -30,6 +32,7 @@ impl Camera {
             image_width: 100,
             samples_per_pixel: 10,
             max_depth: 10,
+            vfov: 90.0,
             image_height: 0,
             pixel_samples_scale: 0.0,
             center: Point3::new(0.0, 0.0, 0.0),
@@ -57,10 +60,12 @@ impl Camera {
             z: 0.0,
         };
 
-        let view_point_height = 2.0;
-        let view_point_width =
-            view_point_height * (self.image_width as f64 / self.image_height as f64);
         let focal_length = 1.0; //the distance between camera and item
+        let theta = rtweekend::degrees_to_radians(self.vfov);
+        let h = (theta / 2.0).tan();
+        let viewport_height = 2.0 * h * focal_length;
+        let view_point_width =
+            viewport_height * (self.image_width as f64 / self.image_height as f64);
 
         let viewport_u = Vec3 {
             x: view_point_width,
@@ -69,7 +74,7 @@ impl Camera {
         };
         let viewport_v = Vec3 {
             x: 0.0,
-            y: -view_point_height,
+            y: -viewport_height,
             z: 0.0,
         };
 
@@ -139,7 +144,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book1/image18.png");
+        let path = std::path::Path::new("output/book1/image19.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 

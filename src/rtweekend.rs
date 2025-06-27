@@ -3,9 +3,9 @@ pub(crate) mod interval;
 pub mod vec3;
 
 // const INFINITY:f64 = f64::INFINITY;
-const PI: f64 = std::f64::consts::PI;
+pub(crate) const PI: f64 = std::f64::consts::PI;
 
-fn degrees_to_radians(degrees: f64) -> f64 {
+pub(crate) fn degrees_to_radians(degrees: f64) -> f64 {
     degrees * PI / 180.0
 }
 
