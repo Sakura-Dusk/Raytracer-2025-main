@@ -1,10 +1,10 @@
 use crate::material::hittable;
 use crate::material::hittable::Hittable;
 use crate::rtweekend;
-use crate::rtweekend::color;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, unit_vector};
+use crate::rtweekend::{color, vec3};
 use console::style;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
@@ -16,6 +16,9 @@ pub(crate) struct Camera {
     pub max_depth: i32,         // default in 10
 
     pub vfov: f64, // Vertical view angle (field of view)
+    pub lookfrom: Point3,
+    pub lookat: Point3,
+    pub vup: Vec3,
 
     image_height: u32,
     pixel_samples_scale: f64,
@@ -23,6 +26,9 @@ pub(crate) struct Camera {
     pixel00_loc: Point3,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
+    u: Vec3, //Camera frame basis vectors
+    v: Vec3,
+    w: Vec3,
 }
 
 impl Camera {
@@ -33,12 +39,18 @@ impl Camera {
             samples_per_pixel: 10,
             max_depth: 10,
             vfov: 90.0,
+            lookfrom: Point3::new(0.0, 0.0, 0.0),
+            lookat: Point3::new(0.0, 0.0, -1.0),
+            vup: Vec3::new(0.0, 1.0, 0.0),
             image_height: 0,
             pixel_samples_scale: 0.0,
             center: Point3::new(0.0, 0.0, 0.0),
             pixel00_loc: Point3::new(0.0, 0.0, 0.0),
             pixel_delta_u: Vec3::new(0.0, 0.0, 0.0),
             pixel_delta_v: Vec3::new(0.0, 0.0, 0.0),
+            u: Vec3::new(1.0, 0.0, 0.0),
+            v: Vec3::new(0.0, 1.0, 0.0),
+            w: Vec3::new(0.0, 0.0, 1.0),
         }
     }
 }
@@ -54,41 +66,26 @@ impl Camera {
 
         self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
 
-        self.center = Point3 {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        };
+        self.center = self.lookfrom;
 
-        let focal_length = 1.0; //the distance between camera and item
+        let focal_length = (self.lookfrom - self.lookat).length(); //the distance between camera and item
         let theta = rtweekend::degrees_to_radians(self.vfov);
         let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h * focal_length;
-        let view_point_width =
-            viewport_height * (self.image_width as f64 / self.image_height as f64);
+        let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
 
-        let viewport_u = Vec3 {
-            x: view_point_width,
-            y: 0.0,
-            z: 0.0,
-        };
-        let viewport_v = Vec3 {
-            x: 0.0,
-            y: -viewport_height,
-            z: 0.0,
-        };
+        self.w = unit_vector(&(self.lookfrom - self.lookat));
+        self.u = unit_vector(&vec3::cross(&self.vup, &self.w));
+        self.v = vec3::cross(&self.w, &self.u);
+
+        let viewport_u = viewport_width * self.u;
+        let viewport_v = viewport_height * -self.v;
 
         self.pixel_delta_u = viewport_u / (self.image_width as f64);
         self.pixel_delta_v = viewport_v / (self.image_height as f64);
 
-        let viewport_upper_left = self.center
-            - Vec3 {
-                x: 0.0,
-                y: 0.0,
-                z: focal_length,
-            }
-            - viewport_u / 2.0
-            - viewport_v / 2.0;
+        let viewport_upper_left =
+            self.center - (focal_length * self.w) - viewport_u / 2.0 - viewport_v / 2.0;
         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
     }
 
@@ -144,7 +141,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book1/image19.png");
+        let path = std::path::Path::new("output/book1/image20.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 

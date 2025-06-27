@@ -15,7 +15,7 @@ impl Vec3 {
         Self { x, y, z }
     }
 
-    fn length(&self) -> f64 {
+    pub(crate) fn length(&self) -> f64 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
@@ -116,7 +116,7 @@ pub(crate) fn dot(u: &Vec3, v: &Vec3) -> f64 {
     u.x * v.x + u.y * v.y + u.z * v.z
 }
 
-fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
+pub(crate) fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
     Vec3::new(
         u.y * v.z - u.z * v.y,
         u.z * v.x - u.x * v.z,
