@@ -1,10 +1,14 @@
 use crate::material::hittable::HitRecord;
+use crate::material::texture::SolidColor;
+use crate::material::texture::Texture;
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{dot, random_unit_vector, reflect, refract, unit_vector};
 use crate::rtweekend::{random_double, vec3};
+use std::rc::Rc;
 
 pub mod hittable;
+pub(crate) mod texture;
 
 pub trait Material {
     fn scatter(
@@ -21,18 +25,24 @@ impl dyn Material {
 }
 
 pub(crate) struct Lambertian {
-    albedo: Color,
+    tex: Rc<dyn Texture>,
 }
 
 impl Lambertian {
     pub(crate) fn default() -> Lambertian {
         Lambertian {
-            albedo: Color::default(),
+            tex: Rc::new(SolidColor::new(&Color::new(0.5, 0.5, 0.5))),
         }
     }
 
     pub(crate) fn new(x: &Color) -> Lambertian {
-        Lambertian { albedo: x.clone() }
+        Lambertian {
+            tex: Rc::new(SolidColor::new(&x)),
+        }
+    }
+
+    pub(crate) fn new_tex(tex: Rc<dyn Texture>) -> Lambertian {
+        Lambertian { tex }
     }
 }
 
@@ -51,7 +61,7 @@ impl Material for Lambertian {
         }
 
         *scattered = Ray::new_move(rec.p, scatter_direction, r_in.time);
-        *attenuation = self.albedo.clone();
+        *attenuation = self.tex.value(rec.u, rec.v, &rec.p);
         true
     }
 }

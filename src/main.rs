@@ -4,6 +4,7 @@ mod rtweekend;
 
 use crate::camera::Camera;
 use crate::material::hittable::sphere::Sphere;
+use crate::material::texture::CheckerTexture;
 use crate::material::{Dielectric, Lambertian, Material, Metal};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::random_double;
@@ -17,11 +18,15 @@ fn main() {
     //World build
     let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
 
-    let ground_material = Rc::new(Lambertian::new(&Color::new(0.5, 0.5, 0.5)));
+    let checker = Rc::new(CheckerTexture::new_color(
+        0.32,
+        &Color::new(0.2, 0.3, 0.1),
+        &Color::new(0.9, 0.9, 0.9),
+    ));
     world.add(Rc::new(Sphere::new(
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
-        ground_material,
+        Rc::new(Lambertian::new_tex(checker)),
     )));
 
     for a in -11..11 {
