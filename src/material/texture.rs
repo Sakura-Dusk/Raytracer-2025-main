@@ -1,8 +1,10 @@
+mod perlin;
 mod rtw_stb_image;
 
 use crate::material::texture::rtw_stb_image::RtwImage;
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::Point3;
+use perlin::Perlin;
 use std::rc::Rc;
 
 pub trait Texture {
@@ -101,5 +103,16 @@ impl Texture for ImageTexture {
             (color_scale * pixel[1] as f64) * (color_scale * pixel[1] as f64),
             (color_scale * pixel[2] as f64) * (color_scale * pixel[2] as f64),
         )
+    }
+}
+
+#[derive(Default)]
+pub struct NoiseTexture {
+    noise: Perlin,
+}
+
+impl Texture for NoiseTexture {
+    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+        Color::new(1.0, 1.0, 1.0) * self.noise.noise(p)
     }
 }

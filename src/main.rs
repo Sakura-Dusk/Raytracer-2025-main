@@ -5,7 +5,7 @@ mod rtweekend;
 use crate::camera::Camera;
 use crate::material::hittable::hittable_list::HittableList;
 use crate::material::hittable::sphere::Sphere;
-use crate::material::texture::{CheckerTexture, ImageTexture, Texture};
+use crate::material::texture::{CheckerTexture, ImageTexture, NoiseTexture, Texture};
 use crate::material::{Dielectric, Lambertian, Material, Metal};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::random_double;
@@ -16,11 +16,12 @@ use rtweekend::vec3::Vec3;
 use std::rc::Rc;
 
 fn main() {
-    let opt = 3;
+    let opt = 4;
     match opt {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
+        4 => perlin_spheres(),
         _ => (),
     }
 }
@@ -171,6 +172,39 @@ fn earth() {
 
     let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
     world.add(globe);
+
+    cam.render(&world);
+}
+
+fn perlin_spheres() {
+    let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
+
+    let pertext: Rc<dyn Texture> = Rc::new(NoiseTexture::default());
+
+    world.add(Rc::new(Sphere::new(
+        Point3::new(0.0, -1000., 0.0),
+        1000.0,
+        Rc::new(Lambertian::new_tex(pertext.clone())),
+    )));
+    world.add(Rc::new(Sphere::new(
+        Point3::new(0.0, 2.0, 0.0),
+        2.0,
+        Rc::new(Lambertian::new_tex(pertext.clone())),
+    )));
+
+    let mut cam = Camera::new();
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 50;
+    cam.max_depth = 10;
+
+    cam.vfov = 20.0;
+    cam.lookfrom = Point3::new(13.0, 2.0, 3.0);
+    cam.lookat = Point3::new(0.0, 0.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.defocus_angle = 0.0;
 
     cam.render(&world);
 }
