@@ -1,5 +1,6 @@
 use crate::material::hittable;
 use crate::material::hittable::Hittable;
+use crate::rtweekend::color::Color;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, random_in_unit_disk, unit_vector};
@@ -13,6 +14,7 @@ pub(crate) struct Camera {
     pub image_width: u32,       //default in 100
     pub samples_per_pixel: u32, //default in 10
     pub max_depth: i32,         // default in 10
+    pub background: Color,
 
     pub vfov: f64, // Vertical view angle (field of view)
     pub lookfrom: Point3,
@@ -42,6 +44,7 @@ impl Camera {
             image_width: 100,
             samples_per_pixel: 10,
             max_depth: 10,
+            background: Color::new(0.0, 0.0, 0.0),
 
             vfov: 90.0,
             lookfrom: Point3::new(0.0, 0.0, 0.0),
@@ -134,34 +137,27 @@ impl Camera {
         }
 
         let mut rec: hittable::HitRecord = hittable::HitRecord::new();
-        if world.hit(&r, &mut Interval::new(0.001, f64::INFINITY), &mut rec) {
-            let mut scattered = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
-            let mut attenuation = color::Color::new(1.0, 1.0, 1.0);
-            if rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
-                return attenuation * self.ray_color(&scattered, depth - 1, world, rate);
-            }
-            return color::Color::new(0.0, 0.0, 0.0);
+        if !world.hit(&r, &mut Interval::new(0.001, f64::INFINITY), &mut rec) {
+            return self.background.clone();
         }
 
-        let unit_direction = unit_vector(&r.direction);
-        let a = 0.5 * (unit_direction.y + 1.0);
-        (1.0 - a)
-            * color::Color {
-                x: 1.0,
-                y: 1.0,
-                z: 1.0,
-            }
-            + a * color::Color {
-                x: 0.5,
-                y: 0.7,
-                z: 1.0,
-            }
+        let mut scattered = Ray::default();
+        let mut attenuation = Vec3::default();
+        let color_from_emission = rec.mat.emitted(rec.u, rec.v, &rec.p);
+
+        if !rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
+            return color_from_emission;
+        }
+
+        let color_from_scatter = attenuation * self.ray_color(&scattered, depth - 1, world, rate);
+
+        color_from_emission + color_from_scatter
     }
 
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book2/image16.png");
+        let path = std::path::Path::new("output/book2/image17.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 

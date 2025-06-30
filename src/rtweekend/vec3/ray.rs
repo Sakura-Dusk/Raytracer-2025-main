@@ -1,6 +1,6 @@
 use crate::rtweekend::vec3::{Point3, Vec3};
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct Ray {
     pub origin: Point3,
     pub direction: Vec3,

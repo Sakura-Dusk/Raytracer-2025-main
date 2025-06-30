@@ -3,7 +3,7 @@ use crate::material::texture::SolidColor;
 use crate::material::texture::Texture;
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::ray::Ray;
-use crate::rtweekend::vec3::{dot, random_unit_vector, reflect, refract, unit_vector};
+use crate::rtweekend::vec3::{Point3, dot, random_unit_vector, reflect, refract, unit_vector};
 use crate::rtweekend::{random_double, vec3};
 use std::rc::Rc;
 
@@ -17,7 +17,13 @@ pub trait Material {
         rec: &HitRecord,
         attenuation: &mut Color,
         scattered: &mut Ray,
-    ) -> bool;
+    ) -> bool {
+        false
+    }
+
+    fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color {
+        Color::new(0.0, 0.0, 0.0)
+    }
 }
 
 impl dyn Material {
@@ -150,5 +156,27 @@ impl Material for Dielectric {
 
         *scattered = Ray::new_move(rec.p, direction, r_in.time);
         true
+    }
+}
+
+pub struct DiffuseLight {
+    tex: Rc<dyn Texture>,
+}
+
+impl DiffuseLight {
+    pub fn new(tex: Rc<dyn Texture>) -> DiffuseLight {
+        DiffuseLight { tex }
+    }
+
+    pub fn new_color(emit: &Color) -> DiffuseLight {
+        Self {
+            tex: Rc::new(SolidColor::new(emit)),
+        }
+    }
+}
+
+impl Material for DiffuseLight {
+    fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color {
+        self.tex.value(u, v, p)
     }
 }
