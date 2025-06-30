@@ -11,7 +11,6 @@ use crate::rtweekend::color::Color;
 use crate::rtweekend::random_double;
 use crate::rtweekend::random_double_range;
 use crate::rtweekend::vec3::Point3;
-use material::hittable::hittable_list;
 use rtweekend::vec3::Vec3;
 use std::rc::Rc;
 
@@ -27,7 +26,7 @@ fn main() {
 }
 fn bouncing_spheres() {
     //World build
-    let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
+    let mut world: HittableList = HittableList::new();
 
     let checker = Rc::new(CheckerTexture::new_color(
         0.32,
@@ -115,7 +114,7 @@ fn bouncing_spheres() {
 }
 
 fn checkered_spheres() {
-    let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
+    let mut world: HittableList = HittableList::new();
 
     let checker = Rc::new(CheckerTexture::new_color(
         0.32,
@@ -170,14 +169,14 @@ fn earth() {
 
     cam.defocus_angle = 0.0;
 
-    let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
+    let mut world: HittableList = HittableList::new();
     world.add(globe);
 
     cam.render(&world);
 }
 
 fn perlin_spheres() {
-    let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
+    let mut world: HittableList = HittableList::new();
 
     let pertext: Rc<dyn Texture> = Rc::new(NoiseTexture::default());
 

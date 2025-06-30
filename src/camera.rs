@@ -161,7 +161,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book2/image9.png");
+        let path = std::path::Path::new("output/book2/image10.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -181,7 +181,7 @@ impl Camera {
                 let pixel = img.get_pixel_mut(i, j);
 
                 let mut pixel_color = color::Color::new(0.0, 0.0, 0.0);
-                for sample in 0..self.samples_per_pixel {
+                for _ in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
                     let rate = 0.5;
                     pixel_color += self.ray_color(&r, self.max_depth, world, rate);
