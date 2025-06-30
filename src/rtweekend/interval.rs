@@ -27,7 +27,7 @@ impl Interval {
         self.max - self.min
     }
 
-    fn contains(&self, x: f64) -> bool {
+    pub(crate) fn contains(&self, x: f64) -> bool {
         self.min <= x && x <= self.max
     }
 

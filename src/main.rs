@@ -4,6 +4,7 @@ mod rtweekend;
 
 use crate::camera::Camera;
 use crate::material::hittable::hittable_list::HittableList;
+use crate::material::hittable::quad::Quad;
 use crate::material::hittable::sphere::Sphere;
 use crate::material::texture::{CheckerTexture, ImageTexture, NoiseTexture, Texture};
 use crate::material::{Dielectric, Lambertian, Material, Metal};
@@ -15,12 +16,13 @@ use rtweekend::vec3::Vec3;
 use std::rc::Rc;
 
 fn main() {
-    let opt = 4;
+    let opt = 5;
     match opt {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
         4 => perlin_spheres(),
+        5 => quads(),
         _ => (),
     }
 }
@@ -200,6 +202,65 @@ fn perlin_spheres() {
 
     cam.vfov = 20.0;
     cam.lookfrom = Point3::new(13.0, 2.0, 3.0);
+    cam.lookat = Point3::new(0.0, 0.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.defocus_angle = 0.0;
+
+    cam.render(&world);
+}
+
+fn quads() {
+    let mut world: HittableList = HittableList::new();
+
+    //Materials
+    let left_red = Rc::new(Lambertian::new(&Color::new(1.0, 0.2, 0.2)));
+    let back_green = Rc::new(Lambertian::new(&Color::new(0.2, 1.0, 0.2)));
+    let right_blue = Rc::new(Lambertian::new(&Color::new(0.2, 0.2, 1.0)));
+    let upper_orange = Rc::new(Lambertian::new(&Color::new(1.0, 0.5, 0.0)));
+    let lower_teal = Rc::new(Lambertian::new(&Color::new(0.2, 0.8, 0.8)));
+
+    //Quads
+    world.add(Rc::new(Quad::new(
+        Point3::new(-3.0, -2.0, 5.0),
+        Point3::new(0.0, 0.0, -4.0),
+        Point3::new(0.0, 4.0, 0.0),
+        left_red.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(-2.0, -2.0, 0.0),
+        Point3::new(4.0, 0.0, 0.0),
+        Point3::new(0.0, 4.0, 0.0),
+        back_green.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(3.0, -2.0, 1.0),
+        Point3::new(0.0, 0.0, 4.0),
+        Point3::new(0.0, 4.0, 0.0),
+        right_blue.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(-2.0, 3.0, 1.0),
+        Point3::new(4.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, 4.0),
+        upper_orange.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(-2.0, -3.0, 5.0),
+        Point3::new(4.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, -4.0),
+        lower_teal.clone(),
+    )));
+
+    let mut cam = Camera::new();
+
+    cam.aspect_ratio = 1.0;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+
+    cam.vfov = 80.0;
+    cam.lookfrom = Point3::new(0.0, 0.0, 9.0);
     cam.lookat = Point3::new(0.0, 0.0, 0.0);
     cam.vup = Vec3::new(0.0, 1.0, 0.0);
 
