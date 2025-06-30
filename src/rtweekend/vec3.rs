@@ -92,6 +92,8 @@ impl Mul<f64> for Vec3 {
 impl MulAssign<f64> for Vec3 {
     fn mul_assign(&mut self, t: f64) {
         self.x *= t;
+        self.y *= t;
+        self.z *= t;
     }
 }
 

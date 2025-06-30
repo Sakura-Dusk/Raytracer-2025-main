@@ -1,5 +1,5 @@
-use crate::rtweekend::vec3::{Vec3, dot, unit_vector};
-use crate::rtweekend::{random_double, random_int_range};
+use crate::rtweekend::random_int_range;
+use crate::rtweekend::vec3::{Point3, Vec3, dot, unit_vector};
 use std::ops::Index;
 
 const POINT_COUNT: usize = 256;
@@ -53,6 +53,20 @@ impl Perlin {
         }
 
         self.perlin_interp(&c, u, v, w)
+    }
+
+    pub fn turb(&self, p: Point3, depth: usize) -> f64 {
+        let mut accum = 0.0;
+        let mut temp_p = p;
+        let mut weight = 1.0;
+
+        for _ in 0..depth {
+            accum += weight * self.noise(&temp_p);
+            weight *= 0.5;
+            temp_p *= 2.0;
+        }
+
+        accum.abs()
     }
 
     fn perlin_generate_perm() -> Vec<i32> {
