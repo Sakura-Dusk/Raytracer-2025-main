@@ -1,6 +1,6 @@
 use crate::material::hittable::HitRecord;
+use crate::material::texture::SolidColor;
 use crate::material::texture::Texture;
-use crate::material::texture::{CheckerTexture, SolidColor};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{dot, random_unit_vector, reflect, refract, unit_vector};

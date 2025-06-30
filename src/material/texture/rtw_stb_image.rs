@@ -61,8 +61,8 @@ impl RtwImage {
                 self.bytes_per_scanline = image.depth * image.width;
                 true
             }
-            image::LoadResult::Error(_) => return false,
-            image::LoadResult::ImageF32(_) => return false,
+            image::LoadResult::Error(_) => false,
+            image::LoadResult::ImageF32(_) => false,
         }
     }
 
