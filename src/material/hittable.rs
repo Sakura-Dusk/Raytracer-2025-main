@@ -1,3 +1,5 @@
+mod aabb;
+pub(crate) mod bvh;
 pub(crate) mod hittable_list;
 pub(crate) mod sphere;
 
@@ -40,5 +42,7 @@ impl HitRecord {
 }
 
 pub trait Hittable {
-    fn hit(&self, r: &ray::Ray, ray_t: &interval::Interval, rec: &mut HitRecord) -> bool;
+    fn hit(&self, r: &ray::Ray, ray_t: &mut interval::Interval, rec: &mut HitRecord) -> bool;
+
+    fn bounding_box(&self) -> aabb::AABB;
 }

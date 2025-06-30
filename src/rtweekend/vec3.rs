@@ -15,6 +15,16 @@ impl Vec3 {
         Self { x, y, z }
     }
 
+    pub(crate) fn index_val(&self, id: i32) -> &f64 {
+        if id == 1 {
+            return &self.y;
+        }
+        if id == 2 {
+            return &self.z;
+        }
+        &self.x
+    }
+
     pub(crate) fn length(&self) -> f64 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }

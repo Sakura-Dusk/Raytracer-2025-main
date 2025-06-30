@@ -3,7 +3,6 @@ mod material;
 mod rtweekend;
 
 use crate::camera::Camera;
-use crate::material::hittable::sphere;
 use crate::material::hittable::sphere::Sphere;
 use crate::material::{Dielectric, Lambertian, Material, Metal};
 use crate::rtweekend::color::Color;
@@ -19,7 +18,7 @@ fn main() {
     let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
 
     let ground_material = Rc::new(Lambertian::new(&Color::new(0.5, 0.5, 0.5)));
-    world.add(Box::new(Sphere::new(
+    world.add(Rc::new(Sphere::new(
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
         ground_material,
@@ -40,7 +39,7 @@ fn main() {
                     let albedo = Color::random() * Color::random();
                     let center2 = center + Vec3::new(0.0, random_double_range(0.0, 0.5), 0.0);
                     let sphere_material: Rc<dyn Material> = Rc::new(Lambertian::new(&albedo));
-                    world.add(Box::new(Sphere::new_move(
+                    world.add(Rc::new(Sphere::new_move(
                         center,
                         center2,
                         0.2,
@@ -51,34 +50,36 @@ fn main() {
                     let albedo = Color::random_range(0.5, 1.0);
                     let fuzz = random_double_range(0.0, 0.5);
                     let sphere_material: Rc<dyn Material> = Rc::new(Metal::new(&albedo, fuzz));
-                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                    world.add(Rc::new(Sphere::new(center, 0.2, sphere_material)));
                 } else {
                     //glass
                     let sphere_material: Rc<dyn Material> = Rc::new(Dielectric::new(1.5));
-                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                    world.add(Rc::new(Sphere::new(center, 0.2, sphere_material)));
                 }
             }
         }
     }
 
     let material1 = Rc::new(Dielectric::new(1.5));
-    world.add(Box::new(Sphere::new(
+    world.add(Rc::new(Sphere::new(
         Point3::new(0.0, 1.0, 0.0),
         1.0,
         material1,
     )));
     let material2 = Rc::new(Lambertian::new(&Color::new(0.4, 0.2, 0.1)));
-    world.add(Box::new(Sphere::new(
+    world.add(Rc::new(Sphere::new(
         Point3::new(-4.0, 1.0, 0.0),
         1.0,
         material2,
     )));
     let material3 = Rc::new(Metal::new(&Color::new(0.7, 0.6, 0.5), 0.0));
-    world.add(Box::new(Sphere::new(
+    world.add(Rc::new(Sphere::new(
         Point3::new(4.0, 1.0, 0.0),
         1.0,
         material3,
     )));
+
+    let world = material::hittable::bvh::BvhNode::new(world);
 
     let mut cam: Camera = Camera::new();
     cam.aspect_ratio = 16.0 / 9.0;

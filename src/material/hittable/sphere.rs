@@ -1,4 +1,5 @@
 use crate::material::Material;
+use crate::material::hittable::aabb::AABB;
 use crate::material::hittable::{HitRecord, Hittable};
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3;
@@ -6,18 +7,22 @@ use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3};
 use std::rc::Rc;
 
+#[derive(Clone)]
 pub(crate) struct Sphere {
     pub(crate) center: Ray,
     pub(crate) radius: f64,
     pub(crate) mat: Rc<dyn Material>,
+    pub(crate) bbox: AABB,
 }
 
 impl Sphere {
     pub(crate) fn new(static_center: Point3, radius: f64, mat: Rc<dyn Material>) -> Self {
+        let rvec = Vec3::new(radius, radius, radius);
         Sphere {
             center: Ray::new(static_center, Vec3::new(0.0, 0.0, 0.0)),
             radius: radius.max(0.0),
             mat,
+            bbox: AABB::new_points(static_center - rvec, static_center + rvec),
         }
     }
 
@@ -27,16 +32,22 @@ impl Sphere {
         radius: f64,
         mat: Rc<dyn Material>,
     ) -> Self {
+        let center = Ray::new(center1, center2 - center1);
+        let rvec = Vec3::new(radius, radius, radius);
         Sphere {
-            center: Ray::new(center1, center2 - center1),
+            center,
             radius: radius.max(0.0),
             mat,
+            bbox: AABB::new_merge(
+                &AABB::new_points(center.at(0.0) - rvec, center.at(0.0) + rvec),
+                &AABB::new_points(center.at(1.0) - rvec, center.at(1.0) + rvec),
+            ),
         }
     }
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
+    fn hit(&self, r: &Ray, ray_t: &mut Interval, rec: &mut HitRecord) -> bool {
         let current_center = self.center.at(r.time);
         let oc = current_center - r.origin;
         let a = r.direction.length_squared();
@@ -66,5 +77,9 @@ impl Hittable for Sphere {
         rec.mat = self.mat.clone();
 
         true
+    }
+
+    fn bounding_box(&self) -> AABB {
+        self.bbox.clone()
     }
 }

@@ -5,6 +5,7 @@ use crate::rtweekend::vec3::{dot, random_unit_vector, reflect, refract, unit_vec
 use crate::rtweekend::{random_double, vec3};
 
 pub mod hittable;
+
 pub trait Material {
     fn scatter(
         &self,
@@ -131,7 +132,7 @@ impl Material for Dielectric {
         let cannot_refract = ri * sin_theta > 1.0;
         let direction: vec3::Vec3;
 
-        if (cannot_refract || Dielectric::reflectance(cos_theta, ri) > random_double()) {
+        if cannot_refract || Dielectric::reflectance(cos_theta, ri) > random_double() {
             direction = reflect(&unit_direction, &rec.normal);
         } else {
             direction = refract(&unit_direction, &rec.normal, ri);

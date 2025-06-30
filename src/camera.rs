@@ -105,11 +105,7 @@ impl Camera {
     }
 
     fn sample_square(&self) -> Vec3 {
-        Vec3::new(
-            rtweekend::random_double() - 0.5,
-            rtweekend::random_double() - 0.5,
-            0.0,
-        )
+        Vec3::new(random_double() - 0.5, random_double() - 0.5, 0.0)
     }
 
     fn defocus_disk_sample(&self) -> Point3 {
@@ -139,7 +135,7 @@ impl Camera {
         }
 
         let mut rec: hittable::HitRecord = hittable::HitRecord::new();
-        if world.hit(&r, &Interval::new(0.001, f64::INFINITY), &mut rec) {
+        if world.hit(&r, &mut Interval::new(0.001, f64::INFINITY), &mut rec) {
             let mut scattered = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
             let mut attenuation = color::Color::new(1.0, 1.0, 1.0);
             if rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
@@ -166,7 +162,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book2/image1.png");
+        let path = std::path::Path::new("output/book2/image1_faster.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
