@@ -1,6 +1,5 @@
 use crate::material::hittable;
 use crate::material::hittable::Hittable;
-use crate::rtweekend;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, random_in_unit_disk, unit_vector};
@@ -162,7 +161,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book2/image3.png");
+        let path = std::path::Path::new("output/book2/image5.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 

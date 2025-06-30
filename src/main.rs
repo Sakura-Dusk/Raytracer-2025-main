@@ -3,8 +3,9 @@ mod material;
 mod rtweekend;
 
 use crate::camera::Camera;
+use crate::material::hittable::hittable_list::HittableList;
 use crate::material::hittable::sphere::Sphere;
-use crate::material::texture::CheckerTexture;
+use crate::material::texture::{CheckerTexture, ImageTexture, Texture};
 use crate::material::{Dielectric, Lambertian, Material, Metal};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::random_double;
@@ -15,10 +16,11 @@ use rtweekend::vec3::Vec3;
 use std::rc::Rc;
 
 fn main() {
-    let opt = 2;
+    let opt = 3;
     match opt {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
+        3 => earth(),
         _ => (),
     }
 }
@@ -34,7 +36,7 @@ fn bouncing_spheres() {
     world.add(Rc::new(Sphere::new(
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
-        Rc::new(Lambertian::new_tex(&checker)),
+        Rc::new(Lambertian::new_tex(checker)),
     )));
 
     for a in -11..11 {
@@ -123,12 +125,12 @@ fn checkered_spheres() {
     world.add(Rc::new(Sphere::new(
         Point3::new(0.0, -10.0, 0.0),
         10.0,
-        Rc::new(Lambertian::new_tex(&checker)),
+        Rc::new(Lambertian::new_tex(checker.clone())),
     )));
     world.add(Rc::new(Sphere::new(
         Point3::new(0.0, 10.0, 0.0),
         10.0,
-        Rc::new(Lambertian::new_tex(&checker)),
+        Rc::new(Lambertian::new_tex(checker.clone())),
     )));
 
     let mut cam = Camera::new();
@@ -144,6 +146,31 @@ fn checkered_spheres() {
     cam.vup = Vec3::new(0.0, 1.0, 0.0);
 
     cam.defocus_angle = 0.0;
+
+    cam.render(&world);
+}
+
+fn earth() {
+    let earth_texture: Rc<dyn Texture> = Rc::new(ImageTexture::new("earthmap.jpg"));
+    let erath_surface: Rc<dyn Material> = Rc::new(Lambertian::new_tex(Rc::clone(&earth_texture)));
+    let globe = Rc::new(Sphere::new(Point3::new(0.0, 0.0, 0.0), 2.0, erath_surface));
+
+    let mut cam = Camera::new();
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 50;
+    cam.max_depth = 10;
+
+    cam.vfov = 20.0;
+    cam.lookfrom = Point3::new(0.0, 0.0, 12.0);
+    cam.lookat = Point3::new(0.0, 0.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.defocus_angle = 0.0;
+
+    let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
+    world.add(globe);
 
     cam.render(&world);
 }

@@ -41,8 +41,8 @@ impl Lambertian {
         }
     }
 
-    pub(crate) fn new_tex(tex: &Rc<CheckerTexture>) -> Lambertian {
-        Lambertian { tex: tex.clone() }
+    pub(crate) fn new_tex(tex: Rc<dyn Texture>) -> Self {
+        Self { tex: tex.clone() }
     }
 }
 
