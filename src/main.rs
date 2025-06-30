@@ -15,6 +15,14 @@ use rtweekend::vec3::Vec3;
 use std::rc::Rc;
 
 fn main() {
+    let opt = 2;
+    match opt {
+        1 => bouncing_spheres(),
+        2 => checkered_spheres(),
+        _ => (),
+    }
+}
+fn bouncing_spheres() {
     //World build
     let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
 
@@ -26,7 +34,7 @@ fn main() {
     world.add(Rc::new(Sphere::new(
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
-        Rc::new(Lambertian::new_tex(checker)),
+        Rc::new(Lambertian::new_tex(&checker)),
     )));
 
     for a in -11..11 {
@@ -99,6 +107,43 @@ fn main() {
 
     cam.defocus_angle = 0.6;
     cam.focus_dist = 10.0;
+
+    cam.render(&world);
+}
+
+fn checkered_spheres() {
+    let mut world: hittable_list::HittableList = hittable_list::HittableList::new();
+
+    let checker = Rc::new(CheckerTexture::new_color(
+        0.32,
+        &Color::new(0.2, 0.3, 0.1),
+        &Color::new(0.9, 0.9, 0.9),
+    ));
+
+    world.add(Rc::new(Sphere::new(
+        Point3::new(0.0, -10.0, 0.0),
+        10.0,
+        Rc::new(Lambertian::new_tex(&checker)),
+    )));
+    world.add(Rc::new(Sphere::new(
+        Point3::new(0.0, 10.0, 0.0),
+        10.0,
+        Rc::new(Lambertian::new_tex(&checker)),
+    )));
+
+    let mut cam = Camera::new();
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+
+    cam.vfov = 20.0;
+    cam.lookfrom = Point3::new(13.0, 2.0, 3.0);
+    cam.lookat = Point3::new(0.0, 0.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.defocus_angle = 0.0;
 
     cam.render(&world);
 }
