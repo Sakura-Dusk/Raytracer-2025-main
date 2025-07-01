@@ -1,4 +1,6 @@
+use crate::rtweekend::vec3::Vec3;
 use crate::{rtweekend::interval::Interval, rtweekend::vec3::Point3, rtweekend::vec3::ray::Ray};
+use std::ops::Add;
 
 #[derive(Clone, Copy)]
 pub struct AABB {
@@ -104,5 +106,20 @@ impl AABB {
         } else {
             if self.y.size() > self.z.size() { 1 } else { 2 }
         }
+    }
+}
+
+impl Add<Vec3> for AABB {
+    type Output = Self;
+    fn add(self, offset: Vec3) -> Self::Output {
+        Self::new(self.x + offset.x, self.y + offset.y, self.z + offset.z)
+    }
+}
+
+impl Add<AABB> for Vec3 {
+    type Output = AABB;
+
+    fn add(self, bbox: AABB) -> AABB {
+        bbox + self
     }
 }
