@@ -3,6 +3,7 @@ mod material;
 mod rtweekend;
 
 use crate::camera::Camera;
+use crate::material::hittable::constant_medium::ConstantMedium;
 use crate::material::hittable::hittable_list::HittableList;
 use crate::material::hittable::quad::{Quad, make_box};
 use crate::material::hittable::sphere::Sphere;
@@ -17,7 +18,7 @@ use rtweekend::vec3::Vec3;
 use std::rc::Rc;
 
 fn main() {
-    let opt = 7;
+    let opt = 8;
     match opt {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
@@ -26,6 +27,7 @@ fn main() {
         5 => quads(),
         6 => simple_light(),
         7 => cornell_box(),
+        8 => cornell_smoke(),
         _ => (),
     }
 }
@@ -385,6 +387,96 @@ fn cornell_box() {
     box2 = Rc::new(RotateY::new(box2, -18.0));
     box2 = Rc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
     world.add(box2);
+
+    let mut cam = Camera::new();
+
+    cam.aspect_ratio = 1.0;
+    cam.image_width = 600;
+    cam.samples_per_pixel = 200;
+    cam.max_depth = 50;
+    cam.background = Color::new(0.0, 0.0, 0.0);
+
+    cam.vfov = 40.0;
+    cam.lookfrom = Point3::new(278.0, 278.0, -800.0);
+    cam.lookat = Point3::new(278.0, 278.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.defocus_angle = 0.0;
+
+    cam.render(&world);
+}
+
+fn cornell_smoke() {
+    let mut world = HittableList::new();
+
+    let red = Rc::new(Lambertian::new(&Color::new(0.65, 0.05, 0.05)));
+    let white = Rc::new(Lambertian::new(&Color::new(0.73, 0.73, 0.73)));
+    let green = Rc::new(Lambertian::new(&Color::new(0.12, 0.45, 0.15)));
+    let light = Rc::new(DiffuseLight::new_color(&Color::new(7.0, 7.0, 7.0)));
+
+    world.add(Rc::new(Quad::new(
+        Point3::new(555.0, 0.0, 0.0),
+        Point3::new(0.0, 555.0, 0.0),
+        Point3::new(0.0, 0.0, 555.0),
+        green.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(0.0, 0.0, 0.0),
+        Point3::new(0.0, 555.0, 0.0),
+        Point3::new(0.0, 0.0, 555.0),
+        red.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(113.0, 554.0, 127.0),
+        Point3::new(330.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, 305.0),
+        light.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(0.0, 555.0, 0.0),
+        Point3::new(555.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, 555.0),
+        white.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(0.0, 0.0, 0.0),
+        Point3::new(555.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, 555.0),
+        white.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(0.0, 0.0, 555.0),
+        Point3::new(555.0, 0.0, 0.0),
+        Point3::new(0.0, 555.0, 0.0),
+        white.clone(),
+    )));
+
+    let mut box1: Rc<dyn Hittable> = make_box(
+        &Point3::new(0.0, 0.0, 0.0),
+        &Point3::new(165.0, 330.0, 165.0),
+        white.clone(),
+    );
+    box1 = Rc::new(RotateY::new(box1, 15.0));
+    box1 = Rc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
+
+    let mut box2: Rc<dyn Hittable> = make_box(
+        &Point3::new(0.0, 0.0, 0.0),
+        &Point3::new(165.0, 165.0, 165.0),
+        white.clone(),
+    );
+    box2 = Rc::new(RotateY::new(box2, -18.0));
+    box2 = Rc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
+
+    world.add(Rc::new(ConstantMedium::new_color(
+        box1,
+        0.01,
+        &Color::new(0.0, 0.0, 0.0),
+    )));
+    world.add(Rc::new(ConstantMedium::new_color(
+        box2,
+        0.01,
+        &Color::new(1.0, 1.0, 1.0),
+    )));
 
     let mut cam = Camera::new();
 
