@@ -4,11 +4,11 @@ use crate::material::hittable::{HitRecord, Hittable};
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
 use std::cmp::Ordering;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct BvhNode {
-    left: Rc<dyn Hittable>,
-    right: Rc<dyn Hittable>,
+    left: Arc<dyn Hittable>,
+    right: Arc<dyn Hittable>,
     bbox: AABB,
 }
 
@@ -19,7 +19,7 @@ impl BvhNode {
         Self::build(&mut objects.objects, 0, length)
     }
 
-    fn build(objects: &mut [Rc<dyn Hittable>], start: usize, end: usize) -> Self {
+    fn build(objects: &mut [Arc<dyn Hittable>], start: usize, end: usize) -> Self {
         // 首先计算所有对象的包围盒
         let mut bbox = AABB::EMPTY;
         for object in &objects[start..end] {
@@ -50,8 +50,8 @@ impl BvhNode {
                 objects[start..end].sort_by(comparator);
                 let mid = start + object_span / 2;
                 (
-                    Rc::new(Self::build(objects, start, mid)) as Rc<dyn Hittable>,
-                    Rc::new(Self::build(objects, mid, end)) as Rc<dyn Hittable>,
+                    Arc::new(Self::build(objects, start, mid)) as Arc<dyn Hittable>,
+                    Arc::new(Self::build(objects, mid, end)) as Arc<dyn Hittable>,
                 )
             }
         };
@@ -60,7 +60,7 @@ impl BvhNode {
         Self { left, right, bbox }
     }
 
-    fn box_compare(a: &Rc<dyn Hittable>, b: &Rc<dyn Hittable>, axis_index: usize) -> Ordering {
+    fn box_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>, axis_index: usize) -> Ordering {
         let a_axis_interval = a.bounding_box().axis_interval(axis_index as i32);
         let b_axis_interval = b.bounding_box().axis_interval(axis_index as i32);
         a_axis_interval
@@ -69,15 +69,15 @@ impl BvhNode {
             .unwrap()
     }
 
-    fn box_x_compare(a: &Rc<dyn Hittable>, b: &Rc<dyn Hittable>) -> Ordering {
+    fn box_x_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>) -> Ordering {
         Self::box_compare(a, b, 0)
     }
 
-    fn box_y_compare(a: &Rc<dyn Hittable>, b: &Rc<dyn Hittable>) -> Ordering {
+    fn box_y_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>) -> Ordering {
         Self::box_compare(a, b, 1)
     }
 
-    fn box_z_compare(a: &Rc<dyn Hittable>, b: &Rc<dyn Hittable>) -> Ordering {
+    fn box_z_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>) -> Ordering {
         Self::box_compare(a, b, 2)
     }
 }

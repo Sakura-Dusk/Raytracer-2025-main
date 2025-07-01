@@ -7,28 +7,28 @@ use crate::rtweekend::interval::Interval;
 use crate::rtweekend::random_double;
 use crate::rtweekend::vec3::Vec3;
 use crate::rtweekend::vec3::ray::Ray;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct ConstantMedium {
-    boundary: Rc<dyn Hittable>,
+    boundary: Arc<dyn Hittable>,
     neg_inv_density: f64,
-    phase_function: Rc<dyn Material>,
+    phase_function: Arc<dyn Material>,
 }
 
 impl ConstantMedium {
-    pub fn new(boundary: Rc<dyn Hittable>, density: f64, tex: Rc<dyn Texture>) -> ConstantMedium {
+    pub fn new(boundary: Arc<dyn Hittable>, density: f64, tex: Arc<dyn Texture>) -> ConstantMedium {
         ConstantMedium {
             boundary,
             neg_inv_density: -1.0 / density,
-            phase_function: Rc::new(Isotropic::new(tex)),
+            phase_function: Arc::new(Isotropic::new(tex)),
         }
     }
 
-    pub fn new_color(boundary: Rc<dyn Hittable>, density: f64, albedo: &Color) -> ConstantMedium {
+    pub fn new_color(boundary: Arc<dyn Hittable>, density: f64, albedo: &Color) -> ConstantMedium {
         ConstantMedium {
             boundary,
             neg_inv_density: -1.0 / density,
-            phase_function: Rc::new(Isotropic::new_color(albedo)),
+            phase_function: Arc::new(Isotropic::new_color(albedo)),
         }
     }
 }

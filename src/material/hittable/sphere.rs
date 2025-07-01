@@ -5,18 +5,18 @@ use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3};
 use crate::rtweekend::{PI, vec3};
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub(crate) struct Sphere {
     pub(crate) center: Ray,
     pub(crate) radius: f64,
-    pub(crate) mat: Rc<dyn Material>,
+    pub(crate) mat: Arc<dyn Material>,
     pub(crate) bbox: AABB,
 }
 
 impl Sphere {
-    pub(crate) fn new(static_center: Point3, radius: f64, mat: Rc<dyn Material>) -> Self {
+    pub(crate) fn new(static_center: Point3, radius: f64, mat: Arc<dyn Material>) -> Self {
         let rvec = Vec3::new(radius, radius, radius);
         Sphere {
             center: Ray::new(static_center, Vec3::new(0.0, 0.0, 0.0)),
@@ -30,7 +30,7 @@ impl Sphere {
         center1: Point3,
         center2: Point3,
         radius: f64,
-        mat: Rc<dyn Material>,
+        mat: Arc<dyn Material>,
     ) -> Self {
         let center = Ray::new(center1, center2 - center1);
         let rvec = Vec3::new(radius, radius, radius);

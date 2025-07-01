@@ -13,14 +13,13 @@ use crate::rtweekend::vec3::ray;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, dot};
 use crate::rtweekend::{degrees_to_radians, vec3};
-use std::f64::{INFINITY, NEG_INFINITY};
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub(crate) struct HitRecord {
     pub(crate) p: vec3::Point3,
     pub(crate) normal: Vec3,
-    pub mat: Rc<dyn super::Material>,
+    pub mat: Arc<dyn super::Material>,
     t: f64,
     pub(crate) u: f64,
     pub(crate) v: f64,
@@ -32,7 +31,7 @@ impl HitRecord {
         HitRecord {
             p: vec3::Point3::default(),
             normal: Vec3::default(),
-            mat: Rc::new(Lambertian::default()),
+            mat: Arc::new(Lambertian::default()),
             t: 0.0,
             u: 0.0,
             v: 0.0,
@@ -50,20 +49,20 @@ impl HitRecord {
     }
 }
 
-pub trait Hittable {
+pub trait Hittable: Send + Sync {
     fn hit(&self, r: &Ray, ray_t: &mut Interval, rec: &mut HitRecord) -> bool;
 
     fn bounding_box(&self) -> AABB;
 }
 
 pub struct Translate {
-    object: Rc<dyn Hittable>,
+    object: Arc<dyn Hittable>,
     offset: Vec3,
     bbox: AABB,
 }
 
 impl Translate {
-    pub fn new(object: Rc<dyn Hittable>, offset: Vec3) -> Translate {
+    pub fn new(object: Arc<dyn Hittable>, offset: Vec3) -> Translate {
         let bbox = object.bounding_box() + offset;
         Translate {
             object,
@@ -91,14 +90,14 @@ impl Hittable for Translate {
 }
 
 pub struct RotateY {
-    object: Rc<dyn Hittable>,
+    object: Arc<dyn Hittable>,
     sin_theta: f64,
     cos_theta: f64,
     bbox: AABB,
 }
 
 impl RotateY {
-    pub fn new(object: Rc<dyn Hittable>, angle: f64) -> RotateY {
+    pub fn new(object: Arc<dyn Hittable>, angle: f64) -> RotateY {
         let radians = degrees_to_radians(angle);
         let sin_theta = radians.sin();
         let cos_theta = radians.cos();

@@ -5,21 +5,21 @@ use crate::material::hittable::{HitRecord, Hittable};
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, cross, dot, unit_vector};
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct Quad {
     q: Point3,
     u: Vec3,
     v: Vec3,
     w: Vec3,
-    mat: Rc<dyn Material>,
+    mat: Arc<dyn Material>,
     bbox: AABB,
     normal: Vec3,
     d: f64,
 }
 
 impl Quad {
-    pub(crate) fn new(q: Point3, u: Vec3, v: Vec3, mat: Rc<dyn Material>) -> Self {
+    pub(crate) fn new(q: Point3, u: Vec3, v: Vec3, mat: Arc<dyn Material>) -> Self {
         let mut res = Self {
             q,
             u,
@@ -95,7 +95,7 @@ impl Hittable for Quad {
     }
 }
 
-pub fn make_box(a: &Point3, b: &Point3, mat: Rc<dyn Material>) -> Rc<HittableList> {
+pub fn make_box(a: &Point3, b: &Point3, mat: Arc<dyn Material>) -> Arc<HittableList> {
     let mut sides = HittableList::new();
 
     let min = Point3::new(a.x.min(b.x), a.y.min(b.y), a.z.min(b.z));
@@ -105,42 +105,42 @@ pub fn make_box(a: &Point3, b: &Point3, mat: Rc<dyn Material>) -> Rc<HittableLis
     let dy = Vec3::new(0.0, max.y - min.y, 0.0);
     let dz = Vec3::new(0.0, 0.0, max.z - min.z);
 
-    sides.add(Rc::new(Quad::new(
+    sides.add(Arc::new(Quad::new(
         Point3::new(min.x, min.y, max.z),
         dx,
         dy,
         mat.clone(),
     ))); //front
-    sides.add(Rc::new(Quad::new(
+    sides.add(Arc::new(Quad::new(
         Point3::new(max.x, min.y, max.z),
         -dz,
         dy,
         mat.clone(),
     ))); //right
-    sides.add(Rc::new(Quad::new(
+    sides.add(Arc::new(Quad::new(
         Point3::new(max.x, min.y, min.z),
         -dx,
         dy,
         mat.clone(),
     ))); //back
-    sides.add(Rc::new(Quad::new(
+    sides.add(Arc::new(Quad::new(
         Point3::new(min.x, min.y, min.z),
         dz,
         dy,
         mat.clone(),
     ))); //left
-    sides.add(Rc::new(Quad::new(
+    sides.add(Arc::new(Quad::new(
         Point3::new(min.x, max.y, max.z),
         dx,
         -dz,
         mat.clone(),
     ))); //top
-    sides.add(Rc::new(Quad::new(
+    sides.add(Arc::new(Quad::new(
         Point3::new(min.x, min.y, min.z),
         dx,
         dz,
         mat.clone(),
     ))); //bottom
 
-    Rc::new(sides)
+    Arc::new(sides)
 }

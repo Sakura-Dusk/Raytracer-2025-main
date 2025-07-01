@@ -8,6 +8,7 @@ use crate::rtweekend::{color, degrees_to_radians, random_double, vec3};
 use console::style;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
+use rayon::prelude::*;
 
 pub(crate) struct Camera {
     pub aspect_ratio: f64,      //default in 1.0
@@ -131,9 +132,9 @@ impl Camera {
         Ray::new_move(ray_origin, ray_direction, ray_time)
     }
 
-    fn ray_color(&self, r: &Ray, depth: i32, world: &dyn Hittable, rate: f64) -> color::Color {
+    fn ray_color(&self, r: &Ray, depth: i32, world: &dyn Hittable, rate: f64) -> Color {
         if depth <= 0 {
-            return color::Color::new(0.0, 0.0, 0.0);
+            return Color::new(0.0, 0.0, 0.0);
         }
 
         let mut rec: hittable::HitRecord = hittable::HitRecord::new();
@@ -171,22 +172,45 @@ impl Camera {
             ProgressBar::new((self.image_height * self.image_width) as u64)
         };
 
-        //Render
-        for j in (0..self.image_height).rev() {
-            for i in 0..self.image_width {
-                let pixel = img.get_pixel_mut(i, j);
+        let pixels: Vec<_> = (0..self.image_height)
+            .rev()
+            .flat_map(|j| (0..self.image_width).map(move |i| (i, j)))
+            .collect();
 
-                let mut pixel_color = color::Color::new(0.0, 0.0, 0.0);
+        let colors: Vec<Color> = pixels
+            .par_iter() // 现在可以正确调用
+            .map(|&(i, j)| {
+                let mut pixel_color = Color::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    let rate = 0.5;
-                    pixel_color += self.ray_color(&r, self.max_depth, world, rate);
+                    pixel_color += self.ray_color(&r, self.max_depth, world, 0.5);
                 }
-                pixel_color = pixel_color * self.pixel_samples_scale;
-                color::write_color(pixel, &pixel_color);
-                progress.inc(1);
-            }
+                pixel_color * self.pixel_samples_scale
+            })
+            .collect();
+
+        for ((i, j), color) in pixels.into_iter().zip(colors) {
+            let pixel = img.get_pixel_mut(i, j);
+            color::write_color(pixel, &color);
+            progress.inc(1);
         }
+
+        // //Render
+        // for j in (0..self.image_height).rev() {
+        //     for i in 0..self.image_width {
+        //         let pixel = img.get_pixel_mut(i, j);
+        //
+        //         let mut pixel_color = color::Color::new(0.0, 0.0, 0.0);
+        //         for _ in 0..self.samples_per_pixel {
+        //             let r = self.get_ray(i, j);
+        //             let rate = 0.5;
+        //             pixel_color += self.ray_color(&r, self.max_depth, world, rate);
+        //         }
+        //         pixel_color = pixel_color * self.pixel_samples_scale;
+        //         color::write_color(pixel, &pixel_color);
+        //         progress.inc(1);
+        //     }
+        // }
         progress.finish();
 
         println!(

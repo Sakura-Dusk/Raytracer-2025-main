@@ -5,12 +5,12 @@ use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, dot, random_unit_vector, reflect, refract, unit_vector};
 use crate::rtweekend::{random_double, vec3};
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub mod hittable;
 pub(crate) mod texture;
 
-pub trait Material {
+pub trait Material: Send + Sync {
     fn scatter(
         &self,
         r_in: &Ray,
@@ -31,23 +31,23 @@ impl dyn Material {
 }
 
 pub(crate) struct Lambertian {
-    tex: Rc<dyn Texture>,
+    tex: Arc<dyn Texture>,
 }
 
 impl Lambertian {
     pub(crate) fn default() -> Lambertian {
         Lambertian {
-            tex: Rc::new(SolidColor::new(&Color::new(0.5, 0.5, 0.5))),
+            tex: Arc::new(SolidColor::new(&Color::new(0.5, 0.5, 0.5))),
         }
     }
 
     pub(crate) fn new(x: &Color) -> Lambertian {
         Lambertian {
-            tex: Rc::new(SolidColor::new(&x)),
+            tex: Arc::new(SolidColor::new(&x)),
         }
     }
 
-    pub(crate) fn new_tex(tex: Rc<dyn Texture>) -> Self {
+    pub(crate) fn new_tex(tex: Arc<dyn Texture>) -> Self {
         Self { tex: tex.clone() }
     }
 }
@@ -160,17 +160,17 @@ impl Material for Dielectric {
 }
 
 pub struct DiffuseLight {
-    tex: Rc<dyn Texture>,
+    tex: Arc<dyn Texture>,
 }
 
 impl DiffuseLight {
-    pub fn new(tex: Rc<dyn Texture>) -> DiffuseLight {
+    pub fn new(tex: Arc<dyn Texture>) -> DiffuseLight {
         DiffuseLight { tex }
     }
 
     pub fn new_color(emit: &Color) -> DiffuseLight {
         Self {
-            tex: Rc::new(SolidColor::new(emit)),
+            tex: Arc::new(SolidColor::new(emit)),
         }
     }
 }
@@ -182,17 +182,17 @@ impl Material for DiffuseLight {
 }
 
 struct Isotropic {
-    tex: Rc<dyn Texture>,
+    tex: Arc<dyn Texture>,
 }
 
 impl Isotropic {
-    pub fn new(tex: Rc<dyn Texture>) -> Isotropic {
+    pub fn new(tex: Arc<dyn Texture>) -> Isotropic {
         Isotropic { tex }
     }
 
     pub fn new_color(albedo: &Color) -> Isotropic {
         Isotropic {
-            tex: Rc::new(SolidColor::new(albedo)),
+            tex: Arc::new(SolidColor::new(albedo)),
         }
     }
 }

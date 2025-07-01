@@ -5,9 +5,9 @@ use crate::material::texture::rtw_stb_image::RtwImage;
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::Point3;
 use perlin::Perlin;
-use std::rc::Rc;
+use std::sync::Arc;
 
-pub trait Texture {
+pub trait Texture: Send + Sync {
     fn value(&self, u: f64, v: f64, p: &Point3) -> Color;
 }
 
@@ -34,12 +34,12 @@ impl Texture for SolidColor {
 
 pub(crate) struct CheckerTexture {
     inv_scale: f64,
-    even: Rc<dyn Texture>,
-    odd: Rc<dyn Texture>,
+    even: Arc<dyn Texture>,
+    odd: Arc<dyn Texture>,
 }
 
 impl CheckerTexture {
-    fn new(scale: f64, even: Rc<dyn Texture>, odd: Rc<dyn Texture>) -> Self {
+    fn new(scale: f64, even: Arc<dyn Texture>, odd: Arc<dyn Texture>) -> Self {
         CheckerTexture {
             inv_scale: 1.0 / scale,
             even,
@@ -50,8 +50,8 @@ impl CheckerTexture {
     pub(crate) fn new_color(scale: f64, c1: &Color, c2: &Color) -> Self {
         Self::new(
             scale,
-            Rc::new(SolidColor::new(c1)),
-            Rc::new(SolidColor::new(c2)),
+            Arc::new(SolidColor::new(c1)),
+            Arc::new(SolidColor::new(c2)),
         )
     }
 }

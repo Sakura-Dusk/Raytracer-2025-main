@@ -2,10 +2,10 @@ use crate::material::hittable::aabb::AABB;
 use crate::material::hittable::{HitRecord, Hittable};
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub(crate) struct HittableList {
-    pub(crate) objects: Vec<Rc<dyn Hittable>>,
+    pub(crate) objects: Vec<Arc<dyn Hittable>>,
     bbox: AABB,
 }
 
@@ -21,7 +21,7 @@ impl HittableList {
         self.objects.clear();
     }
 
-    pub fn add(&mut self, object: Rc<dyn Hittable>) {
+    pub fn add(&mut self, object: Arc<dyn Hittable>) {
         let bbox = object.bounding_box();
         self.objects.push(object);
         self.bbox = AABB::new_merge(&self.bbox, &bbox);
