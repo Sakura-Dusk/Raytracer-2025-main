@@ -27,6 +27,8 @@ pub(crate) struct Camera {
 
     image_height: u32,
     pixel_samples_scale: f64,
+    sqrt_spp: i32,
+    recip_sqrt_spp: f64,
     center: Point3,
     pixel00_loc: Point3,
     pixel_delta_u: Vec3,
@@ -57,6 +59,8 @@ impl Camera {
 
             image_height: 0,
             pixel_samples_scale: 0.0,
+            sqrt_spp: 1,
+            recip_sqrt_spp: 1.0,
             center: Point3::new(0.0, 0.0, 0.0),
             pixel00_loc: Point3::new(0.0, 0.0, 0.0),
             pixel_delta_u: Vec3::new(0.0, 0.0, 0.0),
@@ -79,7 +83,9 @@ impl Camera {
             self.image_height
         };
 
-        self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
+        self.sqrt_spp = (self.samples_per_pixel as f64).sqrt() as i32;
+        self.pixel_samples_scale = 1.0 / (self.sqrt_spp * self.sqrt_spp) as f64;
+        self.recip_sqrt_spp = 1.0 / self.sqrt_spp as f64;
 
         self.center = self.lookfrom;
 
@@ -107,6 +113,12 @@ impl Camera {
         self.defocus_disk_v = self.v * defocus_radius;
     }
 
+    fn sample_square_stratified(&self, s_i: u32, s_j: u32) -> Vec3 {
+        let px = ((s_i as f64 + random_double()) * self.recip_sqrt_spp) - 0.5;
+        let py = ((s_j as f64 + random_double()) * self.recip_sqrt_spp) - 0.5;
+
+        Vec3::new(px, py, 0.0)
+    }
     fn sample_square(&self) -> Vec3 {
         Vec3::new(random_double() - 0.5, random_double() - 0.5, 0.0)
     }
@@ -116,8 +128,8 @@ impl Camera {
         self.center + (p.x * self.defocus_disk_u) + (p.y * self.defocus_disk_v)
     }
 
-    fn get_ray(&self, i: u32, j: u32) -> Ray {
-        let offset = self.sample_square();
+    fn get_ray(&self, i: u32, j: u32, s_i: u32, s_j: u32) -> Ray {
+        let offset = self.sample_square_stratified(s_i, s_j);
         let pixel_sample = self.pixel00_loc
             + ((i as f64 + offset.x) * self.pixel_delta_u)
             + ((j as f64 + offset.y) * self.pixel_delta_v);
@@ -132,7 +144,7 @@ impl Camera {
         Ray::new_move(ray_origin, ray_direction, ray_time)
     }
 
-    fn ray_color(&self, r: &Ray, depth: i32, world: &dyn Hittable, rate: f64) -> Color {
+    fn ray_color(&self, r: &Ray, depth: i32, world: &dyn Hittable) -> Color {
         if depth <= 0 {
             return Color::new(0.0, 0.0, 0.0);
         }
@@ -150,7 +162,7 @@ impl Camera {
             return color_from_emission;
         }
 
-        let color_from_scatter = attenuation * self.ray_color(&scattered, depth - 1, world, rate);
+        let color_from_scatter = attenuation * self.ray_color(&scattered, depth - 1, world);
 
         color_from_emission + color_from_scatter
     }
@@ -158,7 +170,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book2/image23.png");
+        let path = std::path::Path::new("output/book3/image2.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -181,9 +193,11 @@ impl Camera {
             .par_iter() // 现在可以正确调用
             .map(|&(i, j)| {
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
-                for _ in 0..self.samples_per_pixel {
-                    let r = self.get_ray(i, j);
-                    pixel_color += self.ray_color(&r, self.max_depth, world, 0.5);
+                for s_j in 0..self.sqrt_spp {
+                    for s_i in 0..self.sqrt_spp {
+                        let r = self.get_ray(i, j, s_i as u32, s_j as u32);
+                        pixel_color += self.ray_color(&r, self.max_depth, world);
+                    }
                 }
                 pixel_color * self.pixel_samples_scale
             })
