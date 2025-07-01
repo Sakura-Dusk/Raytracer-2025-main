@@ -16,7 +16,7 @@ use rtweekend::vec3::Vec3;
 use std::rc::Rc;
 
 fn main() {
-    let opt = 6;
+    let opt = 7;
     match opt {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
@@ -24,6 +24,7 @@ fn main() {
         4 => perlin_spheres(),
         5 => quads(),
         6 => simple_light(),
+        7 => cornell_box(),
         _ => (),
     }
 }
@@ -314,6 +315,69 @@ fn simple_light() {
     cam.vfov = 20.0;
     cam.lookfrom = Point3::new(26.0, 3.0, 6.0);
     cam.lookat = Point3::new(0.0, 2.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.defocus_angle = 0.0;
+
+    cam.render(&world);
+}
+
+fn cornell_box() {
+    let mut world: HittableList = HittableList::new();
+
+    let red = Rc::new(Lambertian::new(&Color::new(0.65, 0.05, 0.05)));
+    let white = Rc::new(Lambertian::new(&Color::new(0.73, 0.73, 0.73)));
+    let green = Rc::new(Lambertian::new(&Color::new(0.12, 0.45, 0.15)));
+    let light = Rc::new(DiffuseLight::new_color(&Color::new(15.0, 15.0, 15.0)));
+
+    world.add(Rc::new(Quad::new(
+        Point3::new(555.0, 0.0, 0.0),
+        Point3::new(0.0, 555.0, 0.0),
+        Point3::new(0.0, 0.0, 555.0),
+        green.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(0.0, 0.0, 0.0),
+        Point3::new(0.0, 555.0, 0.0),
+        Point3::new(0.0, 0.0, 555.0),
+        red.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(343.0, 554.0, 332.0),
+        Point3::new(-130.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, -130.0),
+        light.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(0.0, 0.0, 0.0),
+        Point3::new(555.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, 555.0),
+        white.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(555.0, 555.0, 555.0),
+        Point3::new(-555.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, -555.0),
+        white.clone(),
+    )));
+    world.add(Rc::new(Quad::new(
+        Point3::new(0.0, 0.0, 555.0),
+        Point3::new(555.0, 0.0, 0.0),
+        Point3::new(0.0, 555.0, 0.0),
+        white.clone(),
+    )));
+
+    let mut cam = Camera::new();
+
+    cam.aspect_ratio = 1.0;
+    cam.image_width = 600;
+    cam.samples_per_pixel = 200;
+    cam.max_depth = 50;
+    cam.background = Color::new(0.0, 0.0, 0.0);
+
+    cam.vfov = 40.0;
+    cam.lookfrom = Point3::new(278.0, 278.0, -800.0);
+    cam.lookat = Point3::new(278.0, 278.0, 0.0);
     cam.vup = Vec3::new(0.0, 1.0, 0.0);
 
     cam.defocus_angle = 0.0;
