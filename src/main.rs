@@ -4,7 +4,7 @@ mod rtweekend;
 
 use crate::camera::Camera;
 use crate::material::hittable::hittable_list::HittableList;
-use crate::material::hittable::quad::Quad;
+use crate::material::hittable::quad::{Quad, make_box};
 use crate::material::hittable::sphere::Sphere;
 use crate::material::texture::{CheckerTexture, ImageTexture, NoiseTexture, Texture};
 use crate::material::{Dielectric, DiffuseLight, Lambertian, Material, Metal};
@@ -366,6 +366,17 @@ fn cornell_box() {
         Point3::new(0.0, 555.0, 0.0),
         white.clone(),
     )));
+
+    world.add(make_box(
+        &Point3::new(130.0, 0.0, 65.0),
+        &Point3::new(295.0, 165.0, 230.0),
+        white.clone(),
+    ));
+    world.add(make_box(
+        &Point3::new(265.0, 0.0, 295.0),
+        &Point3::new(430.0, 330.0, 460.0),
+        white.clone(),
+    ));
 
     let mut cam = Camera::new();
 
