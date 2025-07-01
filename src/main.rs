@@ -291,6 +291,11 @@ fn simple_light() {
     )));
 
     let difflight = Rc::new(DiffuseLight::new_color(&Color::new(4.0, 4.0, 4.0)));
+    world.add(Rc::new(Sphere::new(
+        Point3::new(0.0, 7.0, 0.0),
+        2.0,
+        difflight.clone(),
+    )));
     world.add(Rc::new(Quad::new(
         Point3::new(3.0, 1.0, -2.0),
         Point3::new(2.0, 0.0, 0.0),
