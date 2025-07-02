@@ -129,7 +129,8 @@ impl Camera {
     }
 
     fn get_ray(&self, i: u32, j: u32, s_i: u32, s_j: u32) -> Ray {
-        let offset = self.sample_square_stratified(s_i, s_j);
+        // let offset = self.sample_square_stratified(s_i, s_j);
+        let offset = self.sample_square();
         let pixel_sample = self.pixel00_loc
             + ((i as f64 + offset.x) * self.pixel_delta_u)
             + ((j as f64 + offset.y) * self.pixel_delta_v);
