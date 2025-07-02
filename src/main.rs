@@ -656,7 +656,7 @@ fn new_cornell_box() {
     world.add(Arc::new(Quad::new(
         Point3::new(0.0, 0.0, 555.0),
         Point3::new(555.0, 0.0, 0.0),
-        Point3::new(0.0, 0.0, 555.0),
+        Point3::new(0.0, 0.0, -555.0),
         white.clone(),
     )));
     world.add(Arc::new(Quad::new(

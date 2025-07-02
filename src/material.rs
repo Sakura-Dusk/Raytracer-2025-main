@@ -1,10 +1,10 @@
-use crate::material::hittable::HitRecord;
+use crate::material::hittable::{HitRecord, Hittable};
 use crate::material::texture::SolidColor;
 use crate::material::texture::Texture;
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, dot, random_unit_vector, reflect, refract, unit_vector};
-use crate::rtweekend::{random_double, vec3};
+use crate::rtweekend::{PI, random_double, vec3};
 use std::sync::Arc;
 
 pub mod hittable;
@@ -23,6 +23,10 @@ pub trait Material: Send + Sync {
 
     fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color {
         Color::new(0.0, 0.0, 0.0)
+    }
+
+    fn scattering_pdf(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+        0.0
     }
 }
 
@@ -69,6 +73,11 @@ impl Material for Lambertian {
         *scattered = Ray::new_move(rec.p, scatter_direction, r_in.time);
         *attenuation = self.tex.value(rec.u, rec.v, &rec.p);
         true
+    }
+
+    fn scattering_pdf(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+        let cos_theta = dot(&rec.normal, &unit_vector(&scattered.direction));
+        if cos_theta < 0.0 { 0.0 } else { cos_theta / PI }
     }
 }
 
