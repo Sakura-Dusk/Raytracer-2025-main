@@ -1,6 +1,6 @@
 use crate::material::hittable;
 use crate::material::hittable::Hittable;
-use crate::pdf::{HittablePdf, Pdf};
+use crate::pdf::{CosinePdf, HittablePdf, MixturePdf, Pdf};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
@@ -174,9 +174,12 @@ impl Camera {
             return color_from_emission;
         }
 
-        let light_pdf = HittablePdf::new(lights.clone(), rec.p);
-        scattered = Ray::new_move(rec.p, light_pdf.generate(), r.time);
-        pdf_value = light_pdf.value(&scattered.direction);
+        let p0 = Arc::new(HittablePdf::new(lights.clone(), rec.p));
+        let p1 = Arc::new(CosinePdf::new(&rec.normal));
+        let mixed_pdf = MixturePdf::new(p0, p1);
+
+        scattered = Ray::new_move(rec.p, mixed_pdf.generate(), r.time);
+        pdf_value = mixed_pdf.value(&scattered.direction);
 
         let scattering_pdf = rec.mat.scattering_pdf(r, &rec, &scattered);
 
@@ -189,7 +192,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable, lights: Arc<dyn Hittable>) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book3/image10.png");
+        let path = std::path::Path::new("output/book3/image11.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
