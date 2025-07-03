@@ -1,5 +1,6 @@
 mod camera;
 mod material;
+mod pdf;
 mod rtweekend;
 
 use crate::camera::Camera;
@@ -695,7 +696,7 @@ fn new_cornell_box() {
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 10;
+    cam.samples_per_pixel = 1000;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 

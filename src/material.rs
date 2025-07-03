@@ -1,18 +1,17 @@
-use crate::material::hittable::{HitRecord, Hittable};
+use crate::material::hittable::HitRecord;
 use crate::material::onb::Onb;
 use crate::material::texture::SolidColor;
 use crate::material::texture::Texture;
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{
-    Point3, dot, random_cosine_direction, random_on_hemisphere, random_unit_vector, reflect,
-    refract, unit_vector,
+    Point3, dot, random_cosine_direction, random_unit_vector, reflect, refract, unit_vector,
 };
 use crate::rtweekend::{PI, random_double, vec3};
 use std::sync::Arc;
 
 pub mod hittable;
-mod onb;
+pub(crate) mod onb;
 pub(crate) mod texture;
 
 pub trait Material: Send + Sync {
