@@ -4,9 +4,7 @@ use crate::material::texture::Texture;
 use crate::pdf::{CosinePdf, Pdf, SpherePdf};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::ray::Ray;
-use crate::rtweekend::vec3::{
-    Point3, dot, random_unit_vector, reflect, refract, unit_vector,
-};
+use crate::rtweekend::vec3::{Point3, dot, random_unit_vector, reflect, refract, unit_vector};
 use crate::rtweekend::{PI, random_double, vec3};
 use std::sync::Arc;
 

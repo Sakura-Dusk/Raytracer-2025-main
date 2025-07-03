@@ -6,9 +6,10 @@ mod rtweekend;
 use crate::camera::Camera;
 use crate::material::hittable::hittable_list::HittableList;
 use crate::material::hittable::quad::{Quad, make_box};
+use crate::material::hittable::sphere::Sphere;
 use crate::material::hittable::{Hittable, RotateY, Translate};
-use crate::material::texture::{Texture};
-use crate::material::{DiffuseLight, Lambertian, Material, Metal};
+use crate::material::texture::Texture;
+use crate::material::{Dielectric, DiffuseLight, Lambertian, Material, Metal};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::Point3;
 use rtweekend::vec3::Vec3;
@@ -69,24 +70,21 @@ fn cornell_box() {
         light.clone(),
     )));
 
-    let aluminum = Arc::new(Metal::new(&Color::new(0.8, 0.85, 0.88), 0.0));
     let mut box1: Arc<dyn Hittable> = make_box(
         &Point3::new(0.0, 0.0, 0.0),
         &Point3::new(165.0, 330.0, 165.0),
-        aluminum.clone(),
+        white.clone(),
     );
     box1 = Arc::new(RotateY::new(box1, 15.0));
     box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
     world.add(box1);
 
-    let mut box2: Arc<dyn Hittable> = make_box(
-        &Point3::new(0.0, 0.0, 0.0),
-        &Point3::new(165.0, 165.0, 165.0),
-        white.clone(),
-    );
-    box2 = Arc::new(RotateY::new(box2, -18.0));
-    box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
-    world.add(box2);
+    let glass = Arc::new(Dielectric::new(1.5));
+    world.add(Arc::new(Sphere::new(
+        Point3::new(190.0, 90.0, 190.0),
+        90.0,
+        glass.clone(),
+    )));
 
     let empty_material: Arc<dyn Material> = Arc::new(Lambertian::new(&Color::new(0.0, 0.0, 0.0)));
     let lights = Arc::new(Quad::new(
