@@ -157,7 +157,7 @@ impl Camera {
         let mut scattered = Ray::default();
         let mut attenuation = Vec3::default();
         let mut pdf_value = 0.0;
-        let color_from_emission = rec.mat.emitted(rec.u, rec.v, &rec.p);
+        let color_from_emission = rec.mat.emitted(r, &rec.clone(), rec.u, rec.v, &rec.p);
 
         if !rec
             .mat
@@ -200,7 +200,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book3/image7.png");
+        let path = std::path::Path::new("output/book3/image8.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
