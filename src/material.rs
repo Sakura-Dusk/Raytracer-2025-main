@@ -1,28 +1,42 @@
 use crate::material::hittable::HitRecord;
+use crate::material::hittable::sphere::Sphere;
 use crate::material::onb::Onb;
 use crate::material::texture::SolidColor;
 use crate::material::texture::Texture;
+use crate::pdf::{CosinePdf, Pdf, SpherePdf};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{
     Point3, dot, random_cosine_direction, random_unit_vector, reflect, refract, unit_vector,
 };
 use crate::rtweekend::{PI, random_double, vec3};
+use std::ptr::null_mut;
 use std::sync::Arc;
 
 pub mod hittable;
 pub(crate) mod onb;
 pub(crate) mod texture;
 
+pub struct ScatterRecord {
+    pub attenuation: Color,
+    pub pdf_ptr: Arc<dyn Pdf>,
+    pub skip_pdf: bool,
+    pub skip_pdf_ray: Ray,
+}
+
+impl ScatterRecord {
+    pub fn default() -> ScatterRecord {
+        Self {
+            attenuation: Color::default(),
+            pdf_ptr: Arc::new(SpherePdf::default()),
+            skip_pdf: bool::default(),
+            skip_pdf_ray: Ray::default(),
+        }
+    }
+}
+
 pub trait Material: Send + Sync {
-    fn scatter(
-        &self,
-        r_in: &Ray,
-        rec: &HitRecord,
-        attenuation: &mut Color,
-        scattered: &mut Ray,
-        pdf: &mut f64,
-    ) -> bool {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
         false
     }
 
@@ -62,25 +76,16 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(
-        &self,
-        r_in: &Ray,
-        rec: &HitRecord,
-        attenuation: &mut Color,
-        scattered: &mut Ray,
-        pdf: &mut f64,
-    ) -> bool {
-        let uvw = Onb::new(&rec.normal);
-        let mut scatter_direction = uvw.transform(&random_cosine_direction());
-
-        *scattered = Ray::new_move(rec.p, unit_vector(&scatter_direction), r_in.time);
-        *attenuation = self.tex.value(rec.u, rec.v, &rec.p);
-        *pdf = dot(uvw.w(), &scattered.direction) / PI;
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
+        srec.attenuation = self.tex.value(rec.u, rec.v, &rec.p);
+        srec.pdf_ptr = Arc::new(CosinePdf::new(&rec.normal));
+        srec.skip_pdf = false;
         true
     }
 
     fn scattering_pdf(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
-        1.0 / (2.0 * PI)
+        let cos_theta = dot(&rec.normal, &unit_vector(&scattered.direction));
+        if cos_theta < 0.0 { 0.0 } else { cos_theta / PI }
     }
 }
 
@@ -106,19 +111,16 @@ impl Metal {
 }
 
 impl Material for Metal {
-    fn scatter(
-        &self,
-        r_in: &Ray,
-        rec: &HitRecord,
-        attenuation: &mut Color,
-        scattered: &mut Ray,
-        pdf: &mut f64,
-    ) -> bool {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
         let reflected = reflect(&r_in.direction, &rec.normal);
         let reflected = unit_vector(&reflected) + (self.fuzz * random_unit_vector());
-        *scattered = Ray::new_move(rec.p, reflected, r_in.time);
-        *attenuation = self.albedo.clone();
-        dot(&scattered.direction, &rec.normal) > 0.0
+
+        srec.attenuation = self.albedo.clone();
+        srec.pdf_ptr = Arc::new(SpherePdf::default());
+        srec.skip_pdf = true;
+        srec.skip_pdf_ray = Ray::new_move(rec.p, reflected, r_in.time);
+
+        true
     }
 }
 
@@ -140,15 +142,10 @@ impl Dielectric {
 }
 
 impl Material for Dielectric {
-    fn scatter(
-        &self,
-        r_in: &Ray,
-        rec: &HitRecord,
-        attenuation: &mut Color,
-        scattered: &mut Ray,
-        pdf: &mut f64,
-    ) -> bool {
-        *attenuation = Color::new(1.0, 1.0, 1.0);
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
+        srec.attenuation = Color::new(1.0, 1.0, 1.0);
+        srec.pdf_ptr = Arc::new(SpherePdf::default());
+        srec.skip_pdf = true;
         let ri = if rec.front_face {
             1.0 / self.refraction_index
         } else {
@@ -168,7 +165,7 @@ impl Material for Dielectric {
             direction = refract(&unit_direction, &rec.normal, ri);
         }
 
-        *scattered = Ray::new_move(rec.p, direction, r_in.time);
+        srec.skip_pdf_ray = Ray::new_move(rec.p, direction, r_in.time);
         true
     }
 }
@@ -215,17 +212,10 @@ impl Isotropic {
 }
 
 impl Material for Isotropic {
-    fn scatter(
-        &self,
-        r_in: &Ray,
-        rec: &HitRecord,
-        attenuation: &mut Color,
-        scattered: &mut Ray,
-        pdf: &mut f64,
-    ) -> bool {
-        *scattered = Ray::new_move(rec.p, random_unit_vector(), r_in.time);
-        *attenuation = self.tex.value(rec.u, rec.v, &rec.p);
-        *pdf = 1.0 / (4.0 * PI);
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
+        srec.attenuation = self.tex.value(rec.u, rec.v, &rec.p);
+        srec.pdf_ptr = Arc::new(SpherePdf::default());
+        srec.skip_pdf = false;
         true
     }
 

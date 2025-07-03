@@ -13,6 +13,7 @@ pub trait Pdf: Send + Sync {
     fn generate(&self) -> Vec3;
 }
 
+#[derive(Default)]
 pub struct SpherePdf {}
 
 impl Pdf for SpherePdf {
