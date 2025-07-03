@@ -8,8 +8,7 @@ use crate::material::hittable::hittable_list::HittableList;
 use crate::material::hittable::quad::{Quad, make_box};
 use crate::material::hittable::sphere::Sphere;
 use crate::material::hittable::{Hittable, RotateY, Translate};
-use crate::material::texture::Texture;
-use crate::material::{Dielectric, DiffuseLight, Lambertian, Material, Metal};
+use crate::material::{Dielectric, DiffuseLight, Lambertian, Material};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::Point3;
 use rtweekend::vec3::Vec3;
@@ -87,12 +86,18 @@ fn cornell_box() {
     )));
 
     let empty_material: Arc<dyn Material> = Arc::new(Lambertian::new(&Color::new(0.0, 0.0, 0.0)));
-    let lights = Arc::new(Quad::new(
+    let mut lights = HittableList::new();
+    lights.add(Arc::new(Quad::new(
         Point3::new(343.0, 554.0, 332.0),
         Vec3::new(-130.0, 0.0, 0.0),
         Vec3::new(0.0, 0.0, -105.0),
-        empty_material,
-    ));
+        empty_material.clone(),
+    )));
+    lights.add(Arc::new(Sphere::new(
+        Point3::new(190.0, 90.0, 190.0),
+        90.0,
+        empty_material.clone(),
+    )));
 
     let mut cam = Camera::new();
 
@@ -109,5 +114,5 @@ fn cornell_box() {
 
     cam.defocus_angle = 0.0;
 
-    cam.render(&world, lights);
+    cam.render(&world, Arc::new(lights));
 }

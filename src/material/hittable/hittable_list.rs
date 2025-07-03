@@ -1,6 +1,8 @@
 use crate::material::hittable::aabb::AABB;
 use crate::material::hittable::{HitRecord, Hittable};
 use crate::rtweekend::interval::Interval;
+use crate::rtweekend::random_int_range;
+use crate::rtweekend::vec3::Vec3;
 use crate::rtweekend::vec3::ray::Ray;
 use std::sync::Arc;
 
@@ -51,5 +53,21 @@ impl Hittable for HittableList {
 
     fn bounding_box(&self) -> AABB {
         self.bbox.clone()
+    }
+
+    fn pdf_value(&self, origin: &Vec3, direction: &Vec3) -> f64 {
+        let weight = 1.0 / self.objects.len() as f64;
+        let mut sum = 0.0;
+
+        for object in self.objects.clone() {
+            sum += weight * object.pdf_value(origin, direction);
+        }
+
+        sum
+    }
+
+    fn random(&self, origin: &Vec3) -> Vec3 {
+        let int_size = self.objects.len() as i32;
+        self.objects[random_int_range(0, int_size - 1) as usize].random(origin)
     }
 }
