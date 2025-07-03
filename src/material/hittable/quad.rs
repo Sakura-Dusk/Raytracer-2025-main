@@ -3,8 +3,10 @@ use crate::material::hittable::aabb::AABB;
 use crate::material::hittable::hittable_list::HittableList;
 use crate::material::hittable::{HitRecord, Hittable};
 use crate::rtweekend::interval::Interval;
+use crate::rtweekend::random_double;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, cross, dot, unit_vector};
+use std::f64::INFINITY;
 use std::sync::Arc;
 
 pub struct Quad {
@@ -16,6 +18,7 @@ pub struct Quad {
     bbox: AABB,
     normal: Vec3,
     d: f64,
+    area: f64,
 }
 
 impl Quad {
@@ -29,11 +32,14 @@ impl Quad {
             bbox: AABB::default(),
             normal: Vec3::default(),
             d: 0.0,
+            area: 0.0,
         };
         let n = cross(&u, &v);
         res.normal = unit_vector(&n);
         res.d = dot(&res.normal, &q);
         res.w = n / dot(&n, &n);
+
+        res.area = n.length();
 
         res.set_bounding_box();
         res
@@ -92,6 +98,27 @@ impl Hittable for Quad {
     }
     fn bounding_box(&self) -> AABB {
         self.bbox
+    }
+
+    fn pdf_value(&self, origin: &Vec3, direction: &Vec3) -> f64 {
+        let mut rec = HitRecord::new();
+        if !self.hit(
+            &Ray::new(*origin, *direction),
+            &mut Interval::new(0.001, INFINITY),
+            &mut rec,
+        ) {
+            return 0.0;
+        }
+
+        let distance_squared = rec.t * rec.t * direction.length_squared();
+        let cosine = dot(direction, &self.normal).abs() / direction.length();
+
+        distance_squared / (cosine * self.area)
+    }
+
+    fn random(&self, origin: &Vec3) -> Vec3 {
+        let p = self.q + (random_double() * self.u) + (random_double() * self.v);
+        p - *origin
     }
 }
 

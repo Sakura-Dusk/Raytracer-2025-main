@@ -1,15 +1,16 @@
 use crate::material::hittable;
 use crate::material::hittable::Hittable;
-use crate::pdf::{CosinePdf, Pdf};
+use crate::pdf::{HittablePdf, Pdf};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
-use crate::rtweekend::vec3::{Point3, Vec3, dot, random_in_unit_disk, unit_vector};
-use crate::rtweekend::{color, degrees_to_radians, random_double, random_double_range, vec3};
+use crate::rtweekend::vec3::{Point3, Vec3, random_in_unit_disk, unit_vector};
+use crate::rtweekend::{color, degrees_to_radians, random_double, vec3};
 use console::style;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use rayon::prelude::*;
+use std::sync::Arc;
 
 pub(crate) struct Camera {
     pub aspect_ratio: f64,      //default in 1.0
@@ -145,7 +146,13 @@ impl Camera {
         Ray::new_move(ray_origin, ray_direction, ray_time)
     }
 
-    fn ray_color(&self, r: &Ray, depth: i32, world: &dyn Hittable) -> Color {
+    fn ray_color(
+        &self,
+        r: &Ray,
+        depth: i32,
+        world: &dyn Hittable,
+        lights: Arc<dyn Hittable>,
+    ) -> Color {
         if depth <= 0 {
             return Color::new(0.0, 0.0, 0.0);
         }
@@ -167,23 +174,22 @@ impl Camera {
             return color_from_emission;
         }
 
-        let surface_pdf = CosinePdf::new(&rec.normal);
-        scattered = Ray::new_move(rec.p, surface_pdf.generate(), r.time);
-        pdf_value = surface_pdf.value(&scattered.direction);
+        let light_pdf = HittablePdf::new(lights.clone(), rec.p);
+        scattered = Ray::new_move(rec.p, light_pdf.generate(), r.time);
+        pdf_value = light_pdf.value(&scattered.direction);
 
         let scattering_pdf = rec.mat.scattering_pdf(r, &rec, &scattered);
 
-        let color_from_scatter =
-            (attenuation * scattering_pdf * self.ray_color(&scattered, depth - 1, world))
-                / pdf_value;
+        let sample_color = self.ray_color(&scattered, depth - 1, world, lights.clone());
+        let color_from_scatter = (attenuation * scattering_pdf * sample_color) / pdf_value;
 
         color_from_emission + color_from_scatter
     }
 
-    pub fn render(&mut self, world: &dyn Hittable) {
+    pub fn render(&mut self, world: &dyn Hittable, lights: Arc<dyn Hittable>) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book3/image9.png");
+        let path = std::path::Path::new("output/book3/image10.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -209,7 +215,7 @@ impl Camera {
                 for s_j in 0..self.sqrt_spp {
                     for s_i in 0..self.sqrt_spp {
                         let r = self.get_ray(i, j, s_i as u32, s_j as u32);
-                        pixel_color += self.ray_color(&r, self.max_depth, world);
+                        pixel_color += self.ray_color(&r, self.max_depth, world, lights.clone());
                     }
                 }
                 pixel_color * self.pixel_samples_scale
@@ -221,23 +227,6 @@ impl Camera {
             color::write_color(pixel, &color);
             progress.inc(1);
         }
-
-        // //Render
-        // for j in (0..self.image_height).rev() {
-        //     for i in 0..self.image_width {
-        //         let pixel = img.get_pixel_mut(i, j);
-        //
-        //         let mut pixel_color = color::Color::new(0.0, 0.0, 0.0);
-        //         for _ in 0..self.samples_per_pixel {
-        //             let r = self.get_ray(i, j);
-        //             let rate = 0.5;
-        //             pixel_color += self.ray_color(&r, self.max_depth, world, rate);
-        //         }
-        //         pixel_color = pixel_color * self.pixel_samples_scale;
-        //         color::write_color(pixel, &pixel_color);
-        //         progress.inc(1);
-        //     }
-        // }
         progress.finish();
 
         println!(

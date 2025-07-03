@@ -1,6 +1,11 @@
+use crate::material::hittable::Hittable;
 use crate::material::onb::Onb;
 use crate::rtweekend::PI;
-use crate::rtweekend::vec3::{Vec3, dot, random_cosine_direction, random_unit_vector, unit_vector};
+use crate::rtweekend::vec3::{
+    Point3, Vec3, dot, random_cosine_direction, random_unit_vector, unit_vector,
+};
+use rand::Rng;
+use std::sync::Arc;
 
 pub trait Pdf: Send + Sync {
     fn value(&self, direction: &Vec3) -> f64;
@@ -38,5 +43,26 @@ impl Pdf for CosinePdf {
 
     fn generate(&self) -> Vec3 {
         self.uvw.transform(&random_cosine_direction())
+    }
+}
+
+pub struct HittablePdf {
+    objects: Arc<dyn Hittable>,
+    origin: Point3,
+}
+
+impl HittablePdf {
+    pub fn new(objects: Arc<dyn Hittable>, origin: Point3) -> Self {
+        Self { objects, origin }
+    }
+}
+
+impl Pdf for HittablePdf {
+    fn value(&self, direction: &Vec3) -> f64 {
+        self.objects.pdf_value(&self.origin, direction)
+    }
+
+    fn generate(&self) -> Vec3 {
+        self.objects.random(&self.origin)
     }
 }
