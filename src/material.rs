@@ -1,16 +1,13 @@
 use crate::material::hittable::HitRecord;
-use crate::material::hittable::sphere::Sphere;
-use crate::material::onb::Onb;
 use crate::material::texture::SolidColor;
 use crate::material::texture::Texture;
 use crate::pdf::{CosinePdf, Pdf, SpherePdf};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{
-    Point3, dot, random_cosine_direction, random_unit_vector, reflect, refract, unit_vector,
+    Point3, dot, random_unit_vector, reflect, refract, unit_vector,
 };
 use crate::rtweekend::{PI, random_double, vec3};
-use std::ptr::null_mut;
 use std::sync::Arc;
 
 pub mod hittable;

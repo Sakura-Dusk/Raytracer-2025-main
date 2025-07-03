@@ -4,7 +4,6 @@ use crate::rtweekend::vec3::{
     Point3, Vec3, dot, random_cosine_direction, random_unit_vector, unit_vector,
 };
 use crate::rtweekend::{PI, random_double};
-use rand::Rng;
 use std::sync::Arc;
 
 pub trait Pdf: Send + Sync {

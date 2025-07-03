@@ -1,6 +1,6 @@
 use crate::material::hittable::Hittable;
 use crate::material::{ScatterRecord, hittable};
-use crate::pdf::{CosinePdf, HittablePdf, MixturePdf, Pdf};
+use crate::pdf::{HittablePdf, MixturePdf, Pdf};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
@@ -191,7 +191,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable, lights: Arc<dyn Hittable>) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book3/image12.png");
+        let path = std::path::Path::new("output/book3/image13.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 

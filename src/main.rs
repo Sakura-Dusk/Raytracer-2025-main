@@ -4,24 +4,24 @@ mod pdf;
 mod rtweekend;
 
 use crate::camera::Camera;
-use crate::material::hittable::bvh::BvhNode;
-use crate::material::hittable::constant_medium::ConstantMedium;
 use crate::material::hittable::hittable_list::HittableList;
 use crate::material::hittable::quad::{Quad, make_box};
-use crate::material::hittable::sphere::Sphere;
 use crate::material::hittable::{Hittable, RotateY, Translate};
-use crate::material::texture::{CheckerTexture, ImageTexture, NoiseTexture, Texture};
-use crate::material::{Dielectric, DiffuseLight, Lambertian, Material, Metal};
+use crate::material::texture::{Texture};
+use crate::material::{DiffuseLight, Lambertian, Material, Metal};
 use crate::rtweekend::color::Color;
-use crate::rtweekend::random_double;
-use crate::rtweekend::random_double_range;
 use crate::rtweekend::vec3::Point3;
 use rtweekend::vec3::Vec3;
-use std::io::ErrorKind::TimedOut;
 use std::sync::Arc;
+use std::time::Instant;
 
 fn main() {
+    let start = Instant::now();
+
     cornell_box();
+
+    let duration = start.elapsed();
+    println!("耗时: {:.2}秒", duration.as_secs_f64());
 }
 fn cornell_box() {
     let mut world: HittableList = HittableList::new();
