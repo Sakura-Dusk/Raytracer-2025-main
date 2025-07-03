@@ -3,8 +3,8 @@ use crate::material::hittable::Hittable;
 use crate::rtweekend::color::Color;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
-use crate::rtweekend::vec3::{Point3, Vec3, random_in_unit_disk, unit_vector};
-use crate::rtweekend::{PI, color, degrees_to_radians, random_double, vec3};
+use crate::rtweekend::vec3::{Point3, Vec3, dot, random_in_unit_disk, unit_vector};
+use crate::rtweekend::{PI, color, degrees_to_radians, random_double, random_double_range, vec3};
 use console::style;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
@@ -166,8 +166,29 @@ impl Camera {
             return color_from_emission;
         }
 
-        let scattering_pdf = rec.mat.scattering_pdf(r, &rec, &mut scattered);
-        let pdf_value = scattering_pdf;
+        let on_light = Point3::new(
+            random_double_range(213.0, 343.0),
+            554.0,
+            random_double_range(227.0, 332.0),
+        );
+        let mut to_light = on_light - rec.p;
+        let distance_squared = to_light.length_squared();
+        to_light = unit_vector(&to_light);
+
+        if dot(&to_light, &rec.normal) < 0.0 {
+            return color_from_emission;
+        }
+
+        let light_area = (343.0 - 213.0) * (332.0 - 227.0);
+        let light_cosine = to_light.y.abs();
+        if light_cosine < 0.000001 {
+            return color_from_emission;
+        }
+
+        let pdf_value = distance_squared / (light_cosine * light_area);
+        let scattered = Ray::new_move(rec.p, to_light, r.time);
+
+        let scattering_pdf = rec.mat.scattering_pdf(r, &rec, &scattered);
 
         let color_from_scatter =
             (attenuation * scattering_pdf * self.ray_color(&scattered, depth - 1, world))
@@ -179,7 +200,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
-        let path = std::path::Path::new("output/book3/image6.png");
+        let path = std::path::Path::new("output/book3/image7.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 

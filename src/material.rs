@@ -223,6 +223,11 @@ impl Material for Isotropic {
     ) -> bool {
         *scattered = Ray::new_move(rec.p, random_unit_vector(), r_in.time);
         *attenuation = self.tex.value(rec.u, rec.v, &rec.p);
+        *pdf = 1.0 / (4.0 * PI);
         true
+    }
+
+    fn scattering_pdf(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+        1.0 / (4.0 * PI)
     }
 }
