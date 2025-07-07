@@ -133,21 +133,39 @@ fn try_use_model() {
 
     let model = get_models("cornell_box.obj", 1.0);
     world.add(model);
+    let model = get_models("miku/miku01.obj", 0.2);
+    let model = Arc::new(Translate::new(model, Vec3::new(200.0, 165.5, 200.0)));
+    world.add(model);
 
     let light = Arc::new(DiffuseLight::new_color(&Color::new(15.0, 15.0, 15.0)));
+    let light1 = Arc::new(DiffuseLight::new_color(&Color::new(30.0, 30.0, 30.0)));
     world.add(Arc::new(Quad::new(
-        Point3::new(213.0, 548.799, 227.0),
+        Point3::new(213.0, 548.799, 127.0),
         Point3::new(130.0, 0.0, 0.0),
         Point3::new(0.0, 0.0, 105.0),
         light.clone(),
     )));
+    let feet_light = Arc::new(Quad::new(
+        Point3::new(555.0, 0.2, 0.0),
+        Point3::new(-50.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, 50.0),
+        light1.clone(),
+    ));
+    let feet_light = Arc::new(Translate::new(feet_light, Vec3::new(-320.0, 165.0, 120.0)));
+    world.add(feet_light);
 
     let empty_material: Arc<dyn Material> = Arc::new(Lambertian::new(&Color::new(0.0, 0.0, 0.0)));
     let mut lights = HittableList::new();
     lights.add(Arc::new(Quad::new(
-        Point3::new(213.0, 548.799, 227.0),
+        Point3::new(213.0, 548.799, 127.0),
         Point3::new(130.0, 0.0, 0.0),
         Point3::new(0.0, 0.0, 105.0),
+        empty_material.clone(),
+    )));
+    lights.add(Arc::new(Quad::new(
+        Point3::new(555.0 - 320.0, 0.2 + 165.0, 0.0 + 120.0),
+        Point3::new(-50.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, 50.0),
         empty_material.clone(),
     )));
 
