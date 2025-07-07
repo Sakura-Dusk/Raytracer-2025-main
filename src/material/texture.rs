@@ -1,11 +1,56 @@
+pub(crate) mod model;
 mod perlin;
 mod rtw_stb_image;
 
 use crate::material::texture::rtw_stb_image::RtwImage;
 use crate::rtweekend::color::Color;
-use crate::rtweekend::vec3::Point3;
+use crate::rtweekend::vec3::{Point3, Vec3};
 use perlin::Perlin;
+use std::ops::{Add, Mul, Sub};
 use std::sync::Arc;
+
+pub struct UV {
+    pub u: Vec3,
+    pub v: Vec3,
+}
+
+impl UV {
+    pub fn new(u: Vec3, v: Vec3) -> Self {
+        Self { u, v }
+    }
+}
+
+impl Add for UV {
+    type Output = Self;
+    fn add(self, other: Self) -> Self {
+        Self {
+            u: self.u + other.u,
+            v: self.v + other.v,
+        }
+    }
+}
+
+impl Sub for UV {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self {
+            u: self.u - other.u,
+            v: self.v - other.v,
+        }
+    }
+}
+
+impl Mul<f64> for UV {
+    type Output = Self;
+
+    fn mul(self, other: f64) -> Self {
+        Self {
+            u: self.u * other,
+            v: self.v * other,
+        }
+    }
+}
 
 pub trait Texture: Send + Sync {
     fn value(&self, u: f64, v: f64, p: &Point3) -> Color;

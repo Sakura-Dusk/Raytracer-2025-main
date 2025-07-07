@@ -4,6 +4,7 @@ pub(crate) mod constant_medium;
 pub(crate) mod hittable_list;
 pub(crate) mod quad;
 pub(crate) mod sphere;
+pub(crate) mod triangle;
 
 use crate::material::Lambertian;
 use crate::material::hittable::aabb::AABB;
