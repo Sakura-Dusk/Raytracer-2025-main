@@ -46,12 +46,20 @@ pub trait Material: Send + Sync {
         0.0
     }
 
-    fn get_mapping(&self) -> i32 {
-        0
+    fn check_normal_mapping(&self) -> bool {
+        false
     }
 
     fn get_normal_mapping(&self, u: f64, v: f64) -> Vec3 {
         Vec3::default()
+    }
+
+    fn check_alpha_mapping(&self) -> bool {
+        false
+    }
+
+    fn get_alpha_mapping(&self, u: f64, v: f64) -> f64 {
+        0.0
     }
 }
 
@@ -233,6 +241,7 @@ impl Material for Isotropic {
 pub struct MappingLambertian {
     tex: Arc<dyn Texture>,
     pub normal_mapping: Option<RtwImage>,
+    pub alpha_mapping: Option<RtwImage>,
 }
 
 impl MappingLambertian {
@@ -240,21 +249,32 @@ impl MappingLambertian {
         Self {
             tex: Arc::new(SolidColor::new(&Color::new(0.5, 0.5, 0.5))),
             normal_mapping: None,
+            alpha_mapping: None,
         }
     }
 
-    pub(crate) fn new(x: &Color, normal_mapping: Option<RtwImage>) -> Self {
+    pub(crate) fn new(x: &Color) -> Self {
         Self {
             tex: Arc::new(SolidColor::new(&x)),
-            normal_mapping,
+            normal_mapping: None,
+            alpha_mapping: None,
         }
     }
 
-    pub(crate) fn new_tex(tex: Arc<dyn Texture>, normal_mapping: Option<RtwImage>) -> Self {
+    pub(crate) fn new_tex(tex: Arc<dyn Texture>) -> Self {
         Self {
             tex: tex.clone(),
-            normal_mapping,
+            normal_mapping: None,
+            alpha_mapping: None,
         }
+    }
+
+    pub fn set_normal_mapping(&mut self, normal_mapping: RtwImage) {
+        self.normal_mapping = Some(normal_mapping);
+    }
+
+    pub fn set_alpha_mapping(&mut self, alpha_mapping: RtwImage) {
+        self.alpha_mapping = Some(alpha_mapping);
     }
 }
 
@@ -271,8 +291,12 @@ impl Material for MappingLambertian {
         if cos_theta < 0.0 { 0.0 } else { cos_theta / PI }
     }
 
-    fn get_mapping(&self) -> i32 {
-        1 //for normal mapping
+    fn check_normal_mapping(&self) -> bool {
+        if self.normal_mapping.is_some() {
+            true
+        } else {
+            false
+        }
     }
 
     fn get_normal_mapping(&self, u: f64, v: f64) -> Vec3 {
@@ -288,5 +312,24 @@ impl Material for MappingLambertian {
             col[1] as f64 / 256.0 * 2.0 - 1.0,
             col[2] as f64 / 256.0 * 2.0 - 1.0,
         )
+    }
+
+    fn check_alpha_mapping(&self) -> bool {
+        if self.alpha_mapping.is_some() {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn get_alpha_mapping(&self, u: f64, v: f64) -> f64 {
+        let mp = self.alpha_mapping.as_ref().unwrap();
+        let col = mp.pixel_data(
+            (u * mp.width() as f64) as usize,
+            (v * mp.height() as f64) as usize,
+        );
+        // println!("{} {}", u, v);
+        // println!("{} {} {}", col[0], col[1], col[2]);
+        col[0] as f64 / 256.0
     }
 }

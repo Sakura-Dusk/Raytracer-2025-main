@@ -88,6 +88,13 @@ impl Hittable for Quad {
             return false;
         }
 
+        if self.mat.check_alpha_mapping() == true {
+            let stop_p = self.mat.get_alpha_mapping(alpha, beta);
+            if random_double() < stop_p {
+                return false;
+            }
+        }
+
         //Ray hits the 2D shape
         rec.t = t;
         rec.p = intersection;

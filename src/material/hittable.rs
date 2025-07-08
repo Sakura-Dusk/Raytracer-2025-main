@@ -55,7 +55,7 @@ impl HitRecord {
             -*outward_normal
         };
 
-        if mat.get_mapping() == 1 {
+        if mat.check_normal_mapping() == true {
             let fix = self.mat.get_normal_mapping(u, v);
             // println!("self normal = {} {} {}", self.normal.x, self.normal.y, self.normal.z);
             self.normal = self.normal + fix;

@@ -139,15 +139,22 @@ fn try_use_model() {
     let model = Arc::new(Translate::new(model, Vec3::new(200.0, 165.5, 200.0)));
     world.add(model);
 
-    let floor = Arc::new(MappingLambertian::new(
-        &Color::new(0.73, 0.73, 0.73),
-        Option::Some(RtwImage::new("mapping/floor.png")),
-    ));
+    let mut floor = MappingLambertian::new(&Color::new(0.73, 0.73, 0.73));
+    floor.set_normal_mapping(RtwImage::new("mapping/floor.png"));
     world.add(Arc::new(Quad::new(
         Point3::new(0.0, 0.1, 555.0),
         Point3::new(555.0, 0.0, 0.0),
         Point3::new(0.0, 0.0, -555.0),
-        floor.clone(),
+        Arc::new(floor),
+    )));
+
+    let mut back_ground_block = MappingLambertian::new(&Color::new(0.05, 0.05, 0.65));
+    back_ground_block.set_alpha_mapping(RtwImage::new("mapping/alpha mapping.png"));
+    world.add(Arc::new(Quad::new(
+        Point3::new(555.0, 0.0, 554.0),
+        Point3::new(-555.0, 0.0, 0.0),
+        Point3::new(0.0, 555.0, 0.0),
+        Arc::new(back_ground_block),
     )));
 
     // let model = get_models("bloody-woof/bloody-woof.obj", 150.0);
