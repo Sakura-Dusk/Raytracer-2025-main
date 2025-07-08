@@ -47,20 +47,17 @@ impl HitRecord {
         u: f64,
         v: f64,
     ) {
-        //must make sure "outward_normal" have UNIT length!
-        self.front_face = dot(&r.direction, &outward_normal) < 0.0;
-        self.normal = if self.front_face {
-            *outward_normal
-        } else {
-            -*outward_normal
-        };
-
+        let mut normal = *outward_normal;
         if mat.check_normal_mapping() == true {
             let fix = self.mat.get_normal_mapping(u, v);
             // println!("self normal = {} {} {}", self.normal.x, self.normal.y, self.normal.z);
-            self.normal = self.normal + fix;
+            normal = normal + fix;
             // println!("self normal fix = {} {} {}", self.normal.x, self.normal.y, self.normal.z);
         }
+
+        //must make sure "outward_normal" have UNIT length!
+        self.front_face = dot(&r.direction, &normal) < 0.0;
+        self.normal = if self.front_face { normal } else { -normal };
     }
 }
 

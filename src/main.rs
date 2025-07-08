@@ -157,6 +157,12 @@ fn try_use_model() {
         Arc::new(back_ground_block),
     )));
 
+    world.add(Arc::new(Sphere::new(
+        Point3::new(420.0, 90.0, 90.0),
+        90.0,
+        Arc::new(Metal::new(&Color::new(1.0, 1.0, 1.0), 0.5)),
+    )));
+
     // let model = get_models("bloody-woof/bloody-woof.obj", 150.0);
     // let model = Arc::new(RotateY::new(model, 90.0));
     // let model = Arc::new(Translate::new(model, Vec3::new(330.0, 330.0 + 50.0, 300.0)));
