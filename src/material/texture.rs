@@ -1,6 +1,6 @@
 pub(crate) mod model;
 mod perlin;
-mod rtw_stb_image;
+pub(crate) mod rtw_stb_image;
 
 use crate::material::texture::rtw_stb_image::RtwImage;
 use crate::rtweekend::color::Color;

@@ -4,7 +4,7 @@ use std::env;
 pub const BYTES_PER_PIXEL: usize = 3;
 const MAGENTA: [u8; 3] = [255, 0, 255];
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct RtwImage {
     data: Vec<u8>,
     image_width: usize,

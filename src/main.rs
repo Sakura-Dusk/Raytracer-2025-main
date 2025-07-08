@@ -10,7 +10,8 @@ use crate::material::hittable::sphere::Sphere;
 use crate::material::hittable::triangle::Triangle;
 use crate::material::hittable::{Hittable, RotateY, Translate};
 use crate::material::texture::model::get_models;
-use crate::material::{Dielectric, DiffuseLight, Lambertian, Material, Metal};
+use crate::material::texture::rtw_stb_image::RtwImage;
+use crate::material::{Dielectric, DiffuseLight, Lambertian, MappingLambertian, Material, Metal};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::Point3;
 use rtweekend::vec3::Vec3;
@@ -133,9 +134,26 @@ fn try_use_model() {
 
     let model = get_models("cornell_box.obj", 1.0);
     world.add(model);
+
     let model = get_models("miku/miku01.obj", 0.2);
     let model = Arc::new(Translate::new(model, Vec3::new(200.0, 165.5, 200.0)));
     world.add(model);
+
+    let floor = Arc::new(MappingLambertian::new(
+        &Color::new(0.73, 0.73, 0.73),
+        Option::Some(RtwImage::new("mapping/floor.png")),
+    ));
+    world.add(Arc::new(Quad::new(
+        Point3::new(0.0, 0.1, 555.0),
+        Point3::new(555.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, -555.0),
+        floor.clone(),
+    )));
+
+    // let model = get_models("bloody-woof/bloody-woof.obj", 150.0);
+    // let model = Arc::new(RotateY::new(model, 90.0));
+    // let model = Arc::new(Translate::new(model, Vec3::new(330.0, 330.0 + 50.0, 300.0)));
+    // world.add(model);
 
     let light = Arc::new(DiffuseLight::new_color(&Color::new(15.0, 15.0, 15.0)));
     let light1 = Arc::new(DiffuseLight::new_color(&Color::new(30.0, 30.0, 30.0)));

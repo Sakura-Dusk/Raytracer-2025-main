@@ -6,8 +6,8 @@ pub(crate) mod quad;
 pub(crate) mod sphere;
 pub(crate) mod triangle;
 
-use crate::material::Lambertian;
 use crate::material::hittable::aabb::AABB;
+use crate::material::{Lambertian, Material};
 use crate::rtweekend::interval;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray;
@@ -18,9 +18,9 @@ use std::sync::Arc;
 
 #[derive(Clone)]
 pub(crate) struct HitRecord {
-    pub(crate) p: vec3::Point3,
+    pub(crate) p: Point3,
     pub(crate) normal: Vec3,
-    pub mat: Arc<dyn super::Material>,
+    pub mat: Arc<dyn Material>,
     t: f64,
     pub(crate) u: f64,
     pub(crate) v: f64,
@@ -30,7 +30,7 @@ pub(crate) struct HitRecord {
 impl HitRecord {
     pub fn new() -> HitRecord {
         HitRecord {
-            p: vec3::Point3::default(),
+            p: Point3::default(),
             normal: Vec3::default(),
             mat: Arc::new(Lambertian::default()),
             t: 0.0,
@@ -39,13 +39,27 @@ impl HitRecord {
             front_face: false,
         }
     }
-    fn set_face_normal(&mut self, r: &Ray, outward_normal: &Vec3) {
+    fn set_face_normal(
+        &mut self,
+        r: &Ray,
+        outward_normal: &Vec3,
+        mat: &Arc<dyn Material>,
+        u: f64,
+        v: f64,
+    ) {
         //must make sure "outward_normal" have UNIT length!
         self.front_face = dot(&r.direction, &outward_normal) < 0.0;
         self.normal = if self.front_face {
             *outward_normal
         } else {
             -*outward_normal
+        };
+
+        if mat.get_mapping() == 1 {
+            let fix = self.mat.get_normal_mapping(u, v);
+            // println!("self normal = {} {} {}", self.normal.x, self.normal.y, self.normal.z);
+            self.normal = self.normal + fix;
+            // println!("self normal fix = {} {} {}", self.normal.x, self.normal.y, self.normal.z);
         }
     }
 }

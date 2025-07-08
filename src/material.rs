@@ -1,10 +1,13 @@
 use crate::material::hittable::HitRecord;
 use crate::material::texture::SolidColor;
 use crate::material::texture::Texture;
+use crate::material::texture::rtw_stb_image::RtwImage;
 use crate::pdf::{CosinePdf, Pdf, SpherePdf};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::ray::Ray;
-use crate::rtweekend::vec3::{Point3, dot, random_unit_vector, reflect, refract, unit_vector};
+use crate::rtweekend::vec3::{
+    Point3, Vec3, dot, random_unit_vector, reflect, refract, unit_vector,
+};
 use crate::rtweekend::{PI, random_double, vec3};
 use std::sync::Arc;
 
@@ -41,6 +44,14 @@ pub trait Material: Send + Sync {
 
     fn scattering_pdf(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
         0.0
+    }
+
+    fn get_mapping(&self) -> i32 {
+        0
+    }
+
+    fn get_normal_mapping(&self, u: f64, v: f64) -> Vec3 {
+        Vec3::default()
     }
 }
 
@@ -216,5 +227,66 @@ impl Material for Isotropic {
 
     fn scattering_pdf(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
         1.0 / (4.0 * PI)
+    }
+}
+
+pub struct MappingLambertian {
+    tex: Arc<dyn Texture>,
+    pub normal_mapping: Option<RtwImage>,
+}
+
+impl MappingLambertian {
+    pub(crate) fn default() -> Self {
+        Self {
+            tex: Arc::new(SolidColor::new(&Color::new(0.5, 0.5, 0.5))),
+            normal_mapping: None,
+        }
+    }
+
+    pub(crate) fn new(x: &Color, normal_mapping: Option<RtwImage>) -> Self {
+        Self {
+            tex: Arc::new(SolidColor::new(&x)),
+            normal_mapping,
+        }
+    }
+
+    pub(crate) fn new_tex(tex: Arc<dyn Texture>, normal_mapping: Option<RtwImage>) -> Self {
+        Self {
+            tex: tex.clone(),
+            normal_mapping,
+        }
+    }
+}
+
+impl Material for MappingLambertian {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
+        srec.attenuation = self.tex.value(rec.u, rec.v, &rec.p);
+        srec.pdf_ptr = Arc::new(CosinePdf::new(&rec.normal));
+        srec.skip_pdf = false;
+        true
+    }
+
+    fn scattering_pdf(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+        let cos_theta = dot(&rec.normal, &unit_vector(&scattered.direction));
+        if cos_theta < 0.0 { 0.0 } else { cos_theta / PI }
+    }
+
+    fn get_mapping(&self) -> i32 {
+        1 //for normal mapping
+    }
+
+    fn get_normal_mapping(&self, u: f64, v: f64) -> Vec3 {
+        let mp = self.normal_mapping.as_ref().unwrap();
+        let col = mp.pixel_data(
+            (u * mp.width() as f64) as usize,
+            (v * mp.height() as f64) as usize,
+        );
+        // println!("{} {}", u, v);
+        // println!("{} {} {}", col[0], col[1], col[2]);
+        Vec3::new(
+            col[0] as f64 / 256.0 * 2.0 - 1.0,
+            col[1] as f64 / 256.0 * 2.0 - 1.0,
+            col[2] as f64 / 256.0 * 2.0 - 1.0,
+        )
     }
 }

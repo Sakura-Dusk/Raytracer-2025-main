@@ -6,6 +6,8 @@ Done multi-threading.
 
 Done PDF method.
 
+Done Normal Mapping.
+
 ## geometry-bonus
 
 Done model loading.

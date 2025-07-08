@@ -92,7 +92,7 @@ impl Hittable for Quad {
         rec.t = t;
         rec.p = intersection;
         rec.mat = self.mat.clone();
-        rec.set_face_normal(r, &self.normal);
+        rec.set_face_normal(r, &self.normal, &self.mat, alpha, beta);
 
         true
     }
