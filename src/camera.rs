@@ -169,8 +169,9 @@ impl Camera {
             return color_from_emission;
         }
 
-        if (srec.skip_pdf) {
-            return srec.attenuation * self.ray_color(&srec.skip_pdf_ray, depth - 1, world, lights);
+        if srec.skip_pdf {
+            return color_from_emission
+                + srec.attenuation * self.ray_color(&srec.skip_pdf_ray, depth - 1, world, lights);
         }
 
         let light_ptr = Arc::new(HittablePdf::new(lights.clone(), rec.p));
@@ -191,7 +192,7 @@ impl Camera {
     pub fn render(&mut self, world: &dyn Hittable, lights: Arc<dyn Hittable>) {
         self.initialize();
 
-        let path = std::path::Path::new("output/Try/image8.png");
+        let path = std::path::Path::new("output/Try/image9.png");
         let prefix = path.parent().unwrap();
         std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 

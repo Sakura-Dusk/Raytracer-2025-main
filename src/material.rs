@@ -61,6 +61,14 @@ pub trait Material: Send + Sync {
     fn get_alpha_mapping(&self, u: f64, v: f64) -> f64 {
         0.0
     }
+
+    fn check_light_mapping(&self) -> bool {
+        false
+    }
+
+    fn get_light_mapping(&self, u: f64, v: f64) -> Color {
+        Vec3::default()
+    }
 }
 
 impl dyn Material {
@@ -238,34 +246,29 @@ impl Material for Isotropic {
     }
 }
 
-pub struct MappingLambertian {
-    tex: Arc<dyn Texture>,
+pub struct Mapping {
+    basis_material: Arc<dyn Material>,
     pub normal_mapping: Option<RtwImage>,
     pub alpha_mapping: Option<RtwImage>,
+    pub light_mapping: Option<RtwImage>,
 }
 
-impl MappingLambertian {
+impl Mapping {
     pub(crate) fn default() -> Self {
         Self {
-            tex: Arc::new(SolidColor::new(&Color::new(0.5, 0.5, 0.5))),
+            basis_material: Arc::new(Metal::new(&Color::default(), 0.0)),
             normal_mapping: None,
             alpha_mapping: None,
+            light_mapping: None,
         }
     }
 
-    pub(crate) fn new(x: &Color) -> Self {
+    pub(crate) fn new(basis_material: Arc<dyn Material>) -> Self {
         Self {
-            tex: Arc::new(SolidColor::new(&x)),
+            basis_material,
             normal_mapping: None,
             alpha_mapping: None,
-        }
-    }
-
-    pub(crate) fn new_tex(tex: Arc<dyn Texture>) -> Self {
-        Self {
-            tex: tex.clone(),
-            normal_mapping: None,
-            alpha_mapping: None,
+            light_mapping: None,
         }
     }
 
@@ -276,19 +279,29 @@ impl MappingLambertian {
     pub fn set_alpha_mapping(&mut self, alpha_mapping: RtwImage) {
         self.alpha_mapping = Some(alpha_mapping);
     }
+
+    pub fn set_light_mapping(&mut self, light_mapping: RtwImage) {
+        self.light_mapping = Some(light_mapping);
+    }
 }
 
-impl Material for MappingLambertian {
+impl Material for Mapping {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
-        srec.attenuation = self.tex.value(rec.u, rec.v, &rec.p);
-        srec.pdf_ptr = Arc::new(CosinePdf::new(&rec.normal));
-        srec.skip_pdf = false;
-        true
+        self.basis_material.scatter(r_in, rec, srec)
+    }
+
+    fn emitted(&self, r_in: &Ray, rec: &HitRecord, u: f64, v: f64, p: &Point3) -> Color {
+        if !rec.front_face {
+            return Color::new(0.0, 0.0, 0.0);
+        }
+        if !self.check_light_mapping() {
+            return self.basis_material.emitted(r_in, rec, u, v, p);
+        }
+        self.get_light_mapping(u, v)
     }
 
     fn scattering_pdf(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
-        let cos_theta = dot(&rec.normal, &unit_vector(&scattered.direction));
-        if cos_theta < 0.0 { 0.0 } else { cos_theta / PI }
+        self.basis_material.scattering_pdf(r_in, rec, scattered)
     }
 
     fn check_normal_mapping(&self) -> bool {
@@ -331,5 +344,35 @@ impl Material for MappingLambertian {
         // println!("{} {}", u, v);
         // println!("{} {} {}", col[0], col[1], col[2]);
         col[0] as f64 / 256.0
+    }
+
+    fn check_light_mapping(&self) -> bool {
+        if self.light_mapping.is_some() {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn get_light_mapping(&self, u: f64, v: f64) -> Color {
+        let mp = self.light_mapping.as_ref().unwrap();
+
+        if mp.height() == 0 {
+            return Color::new(0.0, 1.0, 1.0);
+        }
+
+        let u = u.clamp(0.0, 1.0);
+        let v = 1.0 - v.clamp(0.0, 1.0);
+
+        let i = (u * mp.width() as f64) as usize;
+        let j = (v * mp.height() as f64) as usize;
+        let pixel = mp.pixel_data(i, j);
+
+        let color_scale = 1.0 / 255.0;
+        Color::new(
+            (color_scale * pixel[0] as f64) * (color_scale * pixel[0] as f64),
+            (color_scale * pixel[1] as f64) * (color_scale * pixel[1] as f64),
+            (color_scale * pixel[2] as f64) * (color_scale * pixel[2] as f64),
+        )
     }
 }

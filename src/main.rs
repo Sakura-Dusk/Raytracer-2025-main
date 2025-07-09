@@ -11,7 +11,7 @@ use crate::material::hittable::triangle::Triangle;
 use crate::material::hittable::{Hittable, RotateY, Translate};
 use crate::material::texture::model::get_models;
 use crate::material::texture::rtw_stb_image::RtwImage;
-use crate::material::{Dielectric, DiffuseLight, Lambertian, MappingLambertian, Material, Metal};
+use crate::material::{Dielectric, DiffuseLight, Lambertian, Mapping, Material, Metal};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::Point3;
 use rtweekend::vec3::Vec3;
@@ -139,7 +139,7 @@ fn try_use_model() {
     let model = Arc::new(Translate::new(model, Vec3::new(200.0, 165.5, 200.0)));
     world.add(model);
 
-    let mut floor = MappingLambertian::new(&Color::new(0.73, 0.73, 0.73));
+    let mut floor = Mapping::new(Arc::new(Lambertian::new(&Color::new(0.73, 0.73, 0.73))));
     floor.set_normal_mapping(RtwImage::new("mapping/floor.png"));
     world.add(Arc::new(Quad::new(
         Point3::new(0.0, 0.1, 555.0),
@@ -148,7 +148,8 @@ fn try_use_model() {
         Arc::new(floor),
     )));
 
-    let mut back_ground_block = MappingLambertian::new(&Color::new(0.05, 0.05, 0.65));
+    let mut back_ground_block =
+        Mapping::new(Arc::new(Lambertian::new(&Color::new(0.05, 0.05, 0.65))));
     back_ground_block.set_alpha_mapping(RtwImage::new("mapping/alpha mapping.png"));
     world.add(Arc::new(Quad::new(
         Point3::new(555.0, 0.0, 554.0),
@@ -157,10 +158,13 @@ fn try_use_model() {
         Arc::new(back_ground_block),
     )));
 
+    let mut color_ball_mapping =
+        Mapping::new(Arc::new(Metal::new(&Color::new(1.0, 1.0, 1.0), 0.5)));
+    color_ball_mapping.set_light_mapping(RtwImage::new("mapping/light mapping another.jpg"));
     world.add(Arc::new(Sphere::new(
         Point3::new(420.0, 90.0, 90.0),
         90.0,
-        Arc::new(Metal::new(&Color::new(1.0, 1.0, 1.0), 0.5)),
+        Arc::new(color_ball_mapping),
     )));
 
     // let model = get_models("bloody-woof/bloody-woof.obj", 150.0);
