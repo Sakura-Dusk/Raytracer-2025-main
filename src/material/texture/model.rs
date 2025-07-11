@@ -4,7 +4,7 @@ use crate::material::hittable::hittable_list::HittableList;
 use crate::material::hittable::triangle::Triangle;
 use crate::material::hittable::{RotateY, Translate};
 use crate::material::texture::UV;
-use crate::material::texture::mtl::{get_mapped_texture, process_mtl_file};
+use crate::material::texture::mtl::{create_texture, process_mtl_file};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::{Point3, Vec3};
 use std::collections::HashMap;
@@ -29,7 +29,7 @@ pub fn load_obj(obj_path: &str, mtl_path: &str, scale: f64) -> Vec<Triangle> {
         std::panic::catch_unwind(|| process_mtl_file(&format!("images/{}", mtl_path)))
     {
         for (_, info) in parsed {
-            let tex = Arc::new(get_mapped_texture(&info));
+            let tex = create_texture(&info);
             let mat = Arc::new(Lambertian::new_tex(tex));
             res_map.insert(info.name.clone(), mat);
         }
@@ -101,21 +101,33 @@ pub fn load_obj(obj_path: &str, mtl_path: &str, scale: f64) -> Vec<Triangle> {
                 UV::default()
             };
 
-            let n0 = Point3::new(
-                normals[3 * indices[i] as usize] as f64,
-                normals[3 * indices[i] as usize + 1] as f64,
-                normals[3 * indices[i] as usize + 2] as f64,
-            );
-            let n1 = Point3::new(
-                normals[3 * indices[i + 1] as usize] as f64,
-                normals[3 * indices[i + 1] as usize + 1] as f64,
-                normals[3 * indices[i + 1] as usize + 2] as f64,
-            );
-            let n2 = Point3::new(
-                normals[3 * indices[i + 2] as usize] as f64,
-                normals[3 * indices[i + 2] as usize + 1] as f64,
-                normals[3 * indices[i + 2] as usize + 2] as f64,
-            );
+            let n0 = if 3 * (indices[i] + 1) <= normals.len() as u32 {
+                Point3::new(
+                    normals[3 * indices[i] as usize] as f64,
+                    normals[3 * indices[i] as usize + 1] as f64,
+                    normals[3 * indices[i] as usize + 2] as f64,
+                )
+            } else {
+                Point3::default()
+            };
+            let n1 = if 3 * (indices[i + 1] + 1) <= normals.len() as u32 {
+                Point3::new(
+                    normals[3 * indices[i + 1] as usize] as f64,
+                    normals[3 * indices[i + 1] as usize + 1] as f64,
+                    normals[3 * indices[i + 1] as usize + 2] as f64,
+                )
+            } else {
+                Point3::default()
+            };
+            let n2 = if 3 * (indices[i] + 1) <= normals.len() as u32 {
+                Point3::new(
+                    normals[3 * indices[i + 2] as usize] as f64,
+                    normals[3 * indices[i + 2] as usize + 1] as f64,
+                    normals[3 * indices[i + 2] as usize + 2] as f64,
+                )
+            } else {
+                Point3::default()
+            };
 
             triangles.push(Triangle::new_point(
                 v0,
