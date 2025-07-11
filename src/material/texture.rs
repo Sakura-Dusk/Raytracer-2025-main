@@ -1,4 +1,5 @@
 pub(crate) mod model;
+mod mtl;
 mod perlin;
 pub(crate) mod rtw_stb_image;
 
@@ -9,13 +10,13 @@ use perlin::Perlin;
 use std::ops::{Add, Mul, Sub};
 use std::sync::Arc;
 
+#[derive(Clone, Default)]
 pub struct UV {
-    pub u: Vec3,
-    pub v: Vec3,
+    pub u: f64,
+    pub v: f64,
 }
-
 impl UV {
-    pub fn new(u: Vec3, v: Vec3) -> Self {
+    pub fn new(u: f64, v: f64) -> Self {
         Self { u, v }
     }
 }
@@ -54,6 +55,14 @@ impl Mul<f64> for UV {
 
 pub trait Texture: Send + Sync {
     fn value(&self, u: f64, v: f64, p: &Point3) -> Color;
+
+    fn normal(&self, u: f64, v: f64, normal: Vec3, tangent: Vec3, bitangent: Vec3) -> Option<Vec3> {
+        None
+    }
+
+    fn alpha(&self, u: f64, v: f64) -> Option<f64> {
+        None
+    }
 }
 
 pub(crate) struct SolidColor {
@@ -169,5 +178,87 @@ impl NoiseTexture {
 impl Texture for NoiseTexture {
     fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
         Color::new(0.5, 0.5, 0.5) * (1.0 + (self.scale * p.z + 10.0 * self.noise.turb(*p, 7)).sin())
+    }
+}
+
+pub struct Orthogonal {
+    cols: [Vec3; 3],
+}
+
+impl Orthogonal {
+    pub fn from_cols(t: Vec3, b: Vec3, n: Vec3) -> Self {
+        Self { cols: [t, b, n] }
+    }
+
+    pub fn mul_vec3(&self, v: Vec3) -> Vec3 {
+        self.cols[0] * v.x + self.cols[1] * v.y + self.cols[2] * v.z
+    }
+}
+
+struct MappedTexture {
+    color_map: RtwImage,
+    normal_map: Option<RtwImage>,
+    alpha_map: Option<RtwImage>,
+}
+
+impl MappedTexture {
+    pub fn new(path: &str, normal_path: Option<&str>, alpha_path: Option<&str>) -> Self {
+        Self {
+            color_map: RtwImage::new(path),
+            normal_map: normal_path.map(RtwImage::new),
+            alpha_map: alpha_path.map(RtwImage::new),
+        }
+    }
+}
+
+impl Texture for MappedTexture {
+    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+        if self.color_map.height() == 0 {
+            return Color::new(0.0, 1.0, 1.0);
+        }
+
+        let u = u.clamp(0.0, 1.0);
+        let v = 1.0 - v.clamp(0.0, 1.0);
+
+        let i = (u * self.color_map.width() as f64) as usize;
+        let j = (v * self.color_map.height() as f64) as usize;
+        let pixel = self.color_map.pixel_data(i, j);
+
+        let color_scale = 1.0 / 255.0;
+        Color::new(
+            (color_scale * pixel[0] as f64) * (color_scale * pixel[0] as f64),
+            (color_scale * pixel[1] as f64) * (color_scale * pixel[1] as f64),
+            (color_scale * pixel[2] as f64) * (color_scale * pixel[2] as f64),
+        )
+    }
+
+    fn normal(&self, u: f64, v: f64, normal: Vec3, tangent: Vec3, bitangent: Vec3) -> Option<Vec3> {
+        let map = self.normal_map.as_ref()?;
+        let u = u.clamp(0.0, 1.0);
+        let v = 1.0 - v.clamp(0.0, 1.0);
+
+        let i = (u * map.width() as f64) as usize;
+        let j = (v * map.height() as f64) as usize;
+        let pixel = map.pixel_data(i, j);
+
+        let nx = 2.0 * (pixel[0] as f64 / 255.0) - 1.0;
+        let ny = 2.0 * (pixel[1] as f64 / 255.0) - 1.0;
+        let nz = 2.0 * (pixel[2] as f64 / 255.0) - 1.0;
+
+        let tangent_space_normal = Vec3::new(nx, ny, nz);
+        let tbn = Orthogonal::from_cols(tangent, bitangent, normal);
+        Some(tbn.mul_vec3(tangent_space_normal))
+    }
+
+    fn alpha(&self, u: f64, v: f64) -> Option<f64> {
+        let map = self.alpha_map.as_ref()?;
+        let u = u.clamp(0.0, 1.0);
+        let v = 1.0 - v.clamp(0.0, 1.0);
+
+        let i = (u * map.width() as f64) as usize;
+        let j = (v * map.height() as f64) as usize;
+        let pixel = map.pixel_data(i, j);
+
+        Some(pixel[0] as f64 / 255.0)
     }
 }

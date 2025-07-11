@@ -9,7 +9,7 @@ use crate::material::hittable::quad::{Quad, make_box};
 use crate::material::hittable::sphere::Sphere;
 use crate::material::hittable::triangle::Triangle;
 use crate::material::hittable::{Hittable, RotateY, Translate};
-use crate::material::texture::model::get_models;
+use crate::material::texture::model::load_model;
 use crate::material::texture::rtw_stb_image::RtwImage;
 use crate::material::{Dielectric, DiffuseLight, Lambertian, Mapping, Material, Metal};
 use crate::rtweekend::color::Color;
@@ -74,7 +74,7 @@ fn cornell_box() {
         white.clone(),
     )));
 
-    world.add(Arc::new(Triangle::new(
+    world.add(Arc::new(Quad::new(
         Point3::new(213.0, 554.0, 227.0),
         Point3::new(130.0, 0.0, 0.0),
         Point3::new(0.0, 0.0, 105.0),
@@ -99,7 +99,7 @@ fn cornell_box() {
 
     let empty_material: Arc<dyn Material> = Arc::new(Lambertian::new(&Color::new(0.0, 0.0, 0.0)));
     let mut lights = HittableList::new();
-    lights.add(Arc::new(Triangle::new(
+    lights.add(Arc::new(Quad::new(
         Point3::new(213.0, 554.0, 227.0),
         Point3::new(130.0, 0.0, 0.0),
         Point3::new(0.0, 0.0, 105.0),
@@ -132,12 +132,11 @@ fn cornell_box() {
 fn try_use_model() {
     let mut world: HittableList = HittableList::new();
 
-    let model = get_models("cornell_box.obj", 1.0);
-    world.add(model);
+    // let model = get_models("cornell_box.obj", 1.0);
+    // world.add(model);
+    // load_model("cornell_box.obj", "cornell_box.mtl", &mut world, 0.0, Vec3::default());
 
-    let model = get_models("miku/miku01.obj", 0.2);
-    let model = Arc::new(Translate::new(model, Vec3::new(200.0, 165.5, 200.0)));
-    world.add(model);
+    // load_model("miku/miku01.obj", "miku/miku01.mtl", &mut world, 0.0, Vec3::new(200.0, 165.5, 200.0), 0.2);
 
     let mut floor = Mapping::new(Arc::new(Lambertian::new(&Color::new(0.73, 0.73, 0.73))));
     floor.set_normal_mapping(RtwImage::new("mapping/floor.png"));
@@ -162,18 +161,50 @@ fn try_use_model() {
         Mapping::new(Arc::new(Metal::new(&Color::new(1.0, 1.0, 1.0), 0.5)));
     color_ball_mapping.set_light_mapping(RtwImage::new("mapping/light mapping another.jpg"));
     world.add(Arc::new(Sphere::new(
-        Point3::new(420.0, 90.0, 90.0),
-        90.0,
+        Point3::new(420.0, 30.0, 290.0),
+        30.0,
         Arc::new(color_ball_mapping),
     )));
 
-    // let model = get_models("bloody-woof/bloody-woof.obj", 150.0);
-    // let model = Arc::new(RotateY::new(model, 90.0));
-    // let model = Arc::new(Translate::new(model, Vec3::new(330.0, 330.0 + 50.0, 300.0)));
-    // world.add(model);
+    load_model(
+        "bloody-woof/bloody-woof.obj",
+        "bloody-woof/bloody-woof.mtl",
+        &mut world,
+        90.0,
+        Vec3::new(330.0, 100.0 + 50.0, 400.0),
+        300.0,
+    );
 
-    let light = Arc::new(DiffuseLight::new_color(&Color::new(15.0, 15.0, 15.0)));
-    let light1 = Arc::new(DiffuseLight::new_color(&Color::new(30.0, 30.0, 30.0)));
+    let red = Arc::new(Lambertian::new(&Color::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new(&Color::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new(&Color::new(0.12, 0.45, 0.15)));
+    world.add(Arc::new(Quad::new(
+        Point3::new(555.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, 555.0),
+        Point3::new(0.0, 555.0, 0.0),
+        green.clone(),
+    )));
+    world.add(Arc::new(Quad::new(
+        Point3::new(0.0, 0.0, 555.0),
+        Point3::new(0.0, 0.0, -555.0),
+        Point3::new(0.0, 555.0, 0.0),
+        red.clone(),
+    )));
+    world.add(Arc::new(Quad::new(
+        Point3::new(0.0, 555.0, 0.0),
+        Point3::new(555.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, 555.0),
+        white.clone(),
+    )));
+    world.add(Arc::new(Quad::new(
+        Point3::new(0.0, 0.0, 555.0),
+        Point3::new(555.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, -555.0),
+        white.clone(),
+    )));
+
+    let light = Arc::new(DiffuseLight::new_color(&Color::new(21.0, 21.0, 21.0)));
+    let light1 = Arc::new(DiffuseLight::new_color(&Color::new(7.0, 7.0, 7.0)));
     world.add(Arc::new(Quad::new(
         Point3::new(213.0, 548.799, 127.0),
         Point3::new(130.0, 0.0, 0.0),
@@ -182,11 +213,11 @@ fn try_use_model() {
     )));
     let feet_light = Arc::new(Quad::new(
         Point3::new(555.0, 0.2, 0.0),
-        Point3::new(-50.0, 0.0, 0.0),
-        Point3::new(0.0, 0.0, 50.0),
+        Point3::new(-30.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, 30.0),
         light1.clone(),
     ));
-    let feet_light = Arc::new(Translate::new(feet_light, Vec3::new(-320.0, 165.0, 120.0)));
+    let feet_light = Arc::new(Translate::new(feet_light, Vec3::new(-120.0, 0.0, 220.0)));
     world.add(feet_light);
 
     let empty_material: Arc<dyn Material> = Arc::new(Lambertian::new(&Color::new(0.0, 0.0, 0.0)));
@@ -198,9 +229,9 @@ fn try_use_model() {
         empty_material.clone(),
     )));
     lights.add(Arc::new(Quad::new(
-        Point3::new(555.0 - 320.0, 0.2 + 165.0, 0.0 + 120.0),
-        Point3::new(-50.0, 0.0, 0.0),
-        Point3::new(0.0, 0.0, 50.0),
+        Point3::new(555.0 - 120.0, 0.2 + 0.0, 0.0 + 220.0),
+        Point3::new(-30.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, 30.0),
         empty_material.clone(),
     )));
 

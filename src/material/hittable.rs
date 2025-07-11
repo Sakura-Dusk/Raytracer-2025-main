@@ -25,6 +25,8 @@ pub(crate) struct HitRecord {
     pub(crate) u: f64,
     pub(crate) v: f64,
     pub(crate) front_face: bool,
+    pub tangent: Vec3,
+    pub bitangent: Vec3,
 }
 
 impl HitRecord {
@@ -37,6 +39,8 @@ impl HitRecord {
             u: 0.0,
             v: 0.0,
             front_face: false,
+            tangent: Vec3::new(1.0, 0.0, 0.0),
+            bitangent: Vec3::new(0.0, 1.0, 0.0),
         }
     }
     fn set_face_normal(

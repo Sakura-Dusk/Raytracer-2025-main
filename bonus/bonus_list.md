@@ -6,7 +6,7 @@ Done multi-threading.
 
 Done PDF method.
 
-Done Normal Mapping.
+Done Normal Mapping, Alpha Mapping and Light Mapping.
 
 ## geometry-bonus
 

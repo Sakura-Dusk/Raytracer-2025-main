@@ -13,24 +13,49 @@ pub struct Triangle {
     q: Point3,
     u: Vec3,
     v: Vec3,
+    tq: UV,
+    tu: UV,
+    tv: UV,
     w: Vec3,
     mat: Arc<dyn Material>,
     bbox: AABB,
     normal: Vec3,
+    nq: Vec3,
+    nu: Vec3,
+    nv: Vec3,
+    tangent: Vec3,
     d: f64,
     area: f64,
 }
 
 impl Triangle {
-    pub(crate) fn new(q: Point3, u: Vec3, v: Vec3, mat: Arc<dyn Material>) -> Self {
+    pub(crate) fn new(
+        q: Point3,
+        u: Vec3,
+        v: Vec3,
+        tq: UV,
+        tu: UV,
+        tv: UV,
+        nq: Vec3,
+        nu: Vec3,
+        nv: Vec3,
+        mat: Arc<dyn Material>,
+    ) -> Self {
         let mut res = Self {
             q,
             u,
             v,
+            tq,
+            tu: tu.clone(),
+            tv: tv.clone(),
             w: Vec3::default(),
             mat,
             bbox: AABB::default(),
             normal: Vec3::default(),
+            nq,
+            nu,
+            nv,
+            tangent: Vec3::default(),
             d: 0.0,
             area: 0.0,
         };
@@ -38,6 +63,8 @@ impl Triangle {
         res.normal = unit_vector(&n);
         res.d = dot(&res.normal, &q);
         res.w = n / dot(&n, &n);
+        res.tangent = (u * tv.v.clone() - v * tu.u.clone())
+            / (tu.u.clone() * tv.v.clone() - tu.v.clone() * tv.u.clone());
 
         res.area = n.length() / 2.0;
 
@@ -45,8 +72,38 @@ impl Triangle {
         res
     }
 
-    pub(crate) fn new_point(x: Point3, y: Point3, z: Point3, mat: Arc<dyn Material>) -> Self {
-        Triangle::new(x, y - x, z - x, mat)
+    pub(crate) fn new_point(
+        x: Point3,
+        y: Point3,
+        z: Point3,
+        tx: UV,
+        ty: UV,
+        tz: UV,
+        nx: Vec3,
+        ny: Vec3,
+        nz: Vec3,
+        mat: Arc<dyn Material>,
+    ) -> Self {
+        let q = x;
+        let u = y - x;
+        let v = z - x;
+        let tq = tx.clone();
+        let tu = ty - tx.clone();
+        let tv = tz - tx.clone();
+        let nq = nx;
+        let nu = ny - nx;
+        let nv = nz - nx;
+        if dot(&nq, &cross(&u, &v)) > 0.0 {
+            Triangle::new(q, u, v, tq, tu, tv, nq, nu, nv, mat)
+        } else {
+            Triangle::new(q, v, u, tq, tv, tu, nq, nv, nu, mat)
+        }
+    }
+
+    pub fn set_single_uv(&mut self, uv: UV) {
+        self.tq = uv;
+        self.tu = UV::default();
+        self.tv = UV::default();
     }
 
     fn set_bounding_box(&mut self) {
@@ -95,6 +152,19 @@ impl Hittable for Triangle {
             return false;
         }
 
+        let uv = self.tq.clone() + self.tu.clone() * alpha + self.tv.clone() * beta;
+        let normal =
+            unit_vector(&(self.nq.clone() + self.nu.clone() * alpha + self.nv.clone() * beta));
+
+        let tangent = unit_vector(&(self.tangent - normal * dot(&self.tangent, &normal)));
+        let bitangent = cross(&normal, &tangent);
+
+        let alpha_ = self.mat.get_alpha_mapping(uv.u, uv.v);
+        let x = random_double();
+        if x <= alpha {
+            return false;
+        }
+
         if self.mat.check_alpha_mapping() == true {
             let stop_p = self.mat.get_alpha_mapping(alpha, beta);
             if random_double() < stop_p {
@@ -103,10 +173,14 @@ impl Hittable for Triangle {
         }
 
         //Ray hits the 2D shape
+        rec.u = uv.u;
+        rec.v = uv.v;
         rec.t = t;
         rec.p = intersection;
         rec.mat = self.mat.clone();
-        rec.set_face_normal(r, &self.normal, &self.mat, alpha, beta);
+        rec.tangent = tangent;
+        rec.bitangent = bitangent;
+        rec.normal = normal;
 
         true
     }
