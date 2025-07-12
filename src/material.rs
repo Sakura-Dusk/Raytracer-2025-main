@@ -39,7 +39,7 @@ pub trait Material: Send + Sync {
     }
 
     fn emitted(&self, r_in: &Ray, rec: &HitRecord, u: f64, v: f64, p: &Point3) -> Color {
-        Color::new(0.02, 0.02, 0.02)
+        Color::new(0.00, 0.00, 0.00)
     }
 
     fn scattering_pdf(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
@@ -211,7 +211,7 @@ impl DiffuseLight {
 impl Material for DiffuseLight {
     fn emitted(&self, r_in: &Ray, rec: &HitRecord, u: f64, v: f64, p: &Point3) -> Color {
         if !rec.front_face {
-            return Color::new(0.02, 0.02, 0.02);
+            return Color::new(0.00, 0.00, 0.00);
         }
         self.tex.value(u, v, p)
     }

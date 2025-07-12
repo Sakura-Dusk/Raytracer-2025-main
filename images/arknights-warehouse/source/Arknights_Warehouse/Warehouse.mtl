@@ -1,16 +1,6 @@
 # Blender 4.4.3 MTL File: 'Warehouse.blend'
 # www.blender.org
 
-# newmtl Arknights_title_screen___login_screen_animation_(CN)
-# Ns 250.000000
-# Ka 1.000000 1.000000 1.000000
-# Ks 0.500000 0.500000 0.500000
-# Ke 0.000000 0.000000 0.000000
-# Ni 1.450000
-# illum 2
-# map_Kd textures/Arknights title screen _ login screen animation (CN).mp4
-# map_d textures/Arknights title screen _ login screen animation (CN).mp4
-
 newmtl Black
 Ns 0.000000
 Ka 0.300000 0.300000 0.300000
@@ -210,16 +200,6 @@ Ni 1.450000
 d 1.000000
 illum 2
 map_Kd textures/BoxTexture.png
-
-newmtl Grey
-Ns 0.000000
-Ka 1.000000 1.000000 1.000000
-Kd 0.165482 0.165482 0.165482
-Ks 0.500000 0.500000 0.500000
-Ke 0.000000 0.000000 0.000000
-Ni 1.450000
-d 1.000000
-illum 2
 
 newmtl GreyMetal
 Ns 490.000000
