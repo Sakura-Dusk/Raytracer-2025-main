@@ -9,11 +9,13 @@ use crate::material::hittable::quad::{Quad, make_box};
 use crate::material::hittable::sphere::Sphere;
 use crate::material::hittable::triangle::Triangle;
 use crate::material::hittable::{Hittable, RotateY, Translate};
+use crate::material::texture::ImageTexture;
 use crate::material::texture::model::load_model;
 use crate::material::texture::rtw_stb_image::RtwImage;
 use crate::material::{Dielectric, DiffuseLight, Lambertian, Mapping, Material, Metal};
 use crate::rtweekend::color::Color;
-use crate::rtweekend::vec3::Point3;
+use crate::rtweekend::vec3::{Point3, cross, random_unit_vector, unit_vector};
+use crate::rtweekend::{random_double, random_double_range};
 use rtweekend::vec3::Vec3;
 use std::sync::Arc;
 use std::time::Instant;
@@ -256,6 +258,38 @@ fn try_use_model() {
         Arc::new(jupiter),
     ));
     world.add(jupiter_object);
+
+    let mut lava_floor = Mapping::new(Arc::new(Lambertian::new(&Color::new(0.73, 0.73, 0.73))));
+    lava_floor.set_light_mapping(RtwImage::new("lava.jpg"));
+    world.add(make_box(
+        &Point3::new(-10.0, 0.2, 20.0),
+        &Point3::new(-10.0 + 80.0, 0.2 + 80.0, 20.0 + 80.0),
+        Arc::new(lava_floor),
+    ));
+    // world.add(Arc::new(Quad::new(
+    //     Point3::new(-10.0, 0.2, 20.0),
+    //     Point3::new(0.0, 0.0, 80.0),
+    //     Point3::new(80.0, 0.0, 0.0),
+    //     Arc::new(lava_floor.clone()),
+    // )));
+    for i in 1..50 {
+        let glass = Arc::new(Dielectric::new(random_double_range(0.0, 2.0)));
+        let x = Point3::new(
+            000.0 + random_double_range(0.0, 3.0 * i as f64),
+            80.0 + 0.42 * i as f64 + random_double_range(0.0, 7.0 * i as f64),
+            20.0 + random_double_range(0.0, 5.0 * i as f64),
+        );
+        world.add(Arc::new(Sphere::new(
+            x,
+            random_double_range(1.0, 1.0 + i as f64 * 0.42),
+            glass.clone(),
+        )));
+        // let y = random_double_range(1.0, 10.0) * random_unit_vector();
+        // let z = random_double_range(1.0, 10.0) * random_unit_vector();
+        // let n = unit_vector(&cross(&y, &z));
+        // world.add(Arc::new(Quad::new(x, y, z, metal.clone())));
+        // world.add(Arc::new(Quad::new(x - n * 0.01, z, y, metal.clone())));
+    }
 
     let mut cam = Camera::new();
 

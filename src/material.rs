@@ -217,7 +217,7 @@ impl Material for DiffuseLight {
     }
 }
 
-struct Isotropic {
+pub struct Isotropic {
     tex: Arc<dyn Texture>,
 }
 
@@ -246,6 +246,7 @@ impl Material for Isotropic {
     }
 }
 
+#[derive(Clone)]
 pub struct Mapping {
     basis_material: Arc<dyn Material>,
     pub normal_mapping: Option<RtwImage>,
