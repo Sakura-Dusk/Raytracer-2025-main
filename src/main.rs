@@ -156,6 +156,13 @@ fn try_use_model() {
         Arc::new(floor),
     )));
 
+    world.add(Arc::new(Quad::new(
+        Point3::new(-300.0, 0.0, 755.0),
+        Point3::new(1355.0, 0.0, 0.0),
+        Point3::new(0.0, 0.0, -755.0),
+        Arc::new(Lambertian::new(&Color::new(0.1, 0.1, 0.1))),
+    )));
+
     // let mut back_ground_block =
     //     Mapping::new(Arc::new(Lambertian::new(&Color::new(0.05, 0.05, 0.65))));
     // back_ground_block.set_alpha_mapping(RtwImage::new("mapping/alpha mapping.png"));
@@ -412,7 +419,22 @@ fn try_use_model() {
             )));
         }
     }
-    // world.add(Arc::new(Sphere::new(Point3::new(490.0 - 70.0, 155.0, -50.0), 15.0, Arc::new(Lambertian::new(&Color::new(0.8, 0.0, 0.0))))));
+
+    world.add(Arc::new(Sphere::new(
+        Point3::new(600.0, 155.0, -250.0),
+        50.0,
+        Arc::new(Metal::new(&Color::new(0.8, 0.8, 0.8), 0.0)),
+    )));
+
+    let mut background_back = Mapping::new(Arc::new(Lambertian::new(&Color::new(0.1, 0.1, 0.1))));
+    background_back.set_light_mapping(RtwImage::new("background_back.png"));
+    world.add(Arc::new(Quad::new(
+        Point3::new(-1500.0, -1500.0, -1000.0),
+        Point3::new(3000.0, 0.0, 0.0),
+        Point3::new(0.0, 3000.0, 0.0),
+        Arc::new(background_back),
+        // Arc::new(Lambertian::new_tex(Arc::new(ImageTexture::new("background_back.png"))))
+    )));
 
     let mut cam = Camera::new();
 
