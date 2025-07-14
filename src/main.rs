@@ -9,15 +9,16 @@ use crate::material::hittable::quad::{Quad, make_box};
 use crate::material::hittable::sphere::Sphere;
 use crate::material::hittable::triangle::Triangle;
 use crate::material::hittable::{Hittable, RotateY, Translate};
-use crate::material::texture::ImageTexture;
 use crate::material::texture::model::load_model;
 use crate::material::texture::rtw_stb_image::RtwImage;
+use crate::material::texture::{ImageTexture, SolidColor};
 use crate::material::{Dielectric, DiffuseLight, Lambertian, Mapping, Material, Metal};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::{Point3, cross, random_unit_vector, unit_vector};
-use crate::rtweekend::{random_double, random_double_range};
+use crate::rtweekend::{PI, random_double, random_double_range};
 use rtweekend::vec3::Vec3;
 use std::sync::Arc;
+use std::sync::TryLockError::Poisoned;
 use std::time::Instant;
 use tobj::Model;
 
@@ -149,8 +150,8 @@ fn try_use_model() {
     let mut floor = Mapping::new(Arc::new(Lambertian::new(&Color::new(0.73, 0.73, 0.73))));
     floor.set_normal_mapping(RtwImage::new("mapping/floor.png"));
     world.add(Arc::new(Quad::new(
-        Point3::new(-100.0, 0.1, 755.0),
-        Point3::new(755.0, 0.0, 0.0),
+        Point3::new(-300.0, 0.1, 755.0),
+        Point3::new(1355.0, 0.0, 0.0),
         Point3::new(0.0, 0.0, -755.0),
         Arc::new(floor),
     )));
@@ -220,16 +221,16 @@ fn try_use_model() {
 
     let metal = Arc::new(Metal::new(&Color::new(1.0, 1.0, 1.0), 0.0));
     world.add(Arc::new(Quad::new(
-        Point3::new(-70.0, 0.0, 0.0),
-        Point3::new(0.0, 0.0, 1000.0),
+        Point3::new(-70.0, 0.0, -500.0),
+        Point3::new(0.0, 0.0, 1500.0),
         Point3::new(0.0, 1000.0, 0.0),
         metal.clone(),
     )));
 
     world.add(Arc::new(Quad::new(
-        Point3::new(700.0, 0.0, 0.0),
+        Point3::new(700.0, 0.0, -500.0),
         Point3::new(0.0, 1000.0, 0.0),
-        Point3::new(0.0, 0.0, 1000.0),
+        Point3::new(0.0, 0.0, 1500.0),
         metal.clone(),
     )));
 
@@ -291,9 +292,131 @@ fn try_use_model() {
         // world.add(Arc::new(Quad::new(x - n * 0.01, z, y, metal.clone())));
     }
 
+    let circle_number = 100;
+    for i in 0..circle_number {
+        let y = random_double_range(-5.0, 5.0);
+        let mp = Point3::new(300.0, 700.0 + y, 300.0);
+        let len = random_double_range(350.0, 400.0);
+        // let dx = Point3::new(1.0, 0.0, 0.0);
+        // let dy = Point3::new(0.0, -0.8, -0.6);
+        let dx = Point3::new(1.0, 0.0, 0.0);
+        let dy = Point3::new(0.0, 0.0, 1.0);
+        let x = mp
+            + len
+                * (dx * (2.0 * PI * i as f64 / circle_number as f64).sin()
+                    + dy * (2.0 * PI * i as f64 / circle_number as f64).cos());
+        let sz = random_double_range(5.0, 10.0);
+
+        let rd = random_double();
+        let cl = Color::new(
+            random_double_range(3.0, 5.0),
+            random_double_range(3.0, 5.0),
+            random_double_range(3.0, 5.0),
+        );
+        // if rd < 0.3 {cl = Color::new(random_double_range(3.0, 5.0), 0.0, 0.0);}
+        // else if rd < 0.6 {cl = Color::new(0.0, 0.0, random_double_range(3.0, 5.0));}
+        // else if rd < 0.9 {cl = Color::new(0.0, random_double_range(3.0, 5.0), 0.0);}
+        // else {cl = Color::new(random_double_range(3.0, 5.0), random_double_range(3.0, 5.0), random_double_range(3.0, 5.0));}
+
+        if rd < 0.3 {
+            world.add(Arc::new(Sphere::new(
+                x,
+                sz,
+                Arc::new(DiffuseLight::new(Arc::new(SolidColor::new(&cl)))),
+            )));
+            // lights.add(Arc::new(Sphere::new(
+            //     x,
+            //     sz,
+            //     empty_material.clone(),
+            // )));
+        } else if rd < 0.7 {
+            world.add(Arc::new(Sphere::new(
+                x,
+                sz,
+                Arc::new(Metal::new(
+                    &Color::new(random_double(), random_double(), random_double()),
+                    random_double_range(0.0, 0.2),
+                )),
+            )));
+        } else {
+            world.add(Arc::new(Sphere::new(
+                x,
+                sz,
+                Arc::new(Dielectric::new(random_double_range(0.0, 2.0))),
+            )));
+        }
+    }
+
+    // world.add(Arc::new(Quad::new(
+    //     Point3::new(-1000.0, -1000.0, -900.0),
+    //     Point3::new(2000.0, 0.0, 0.0),
+    //     Point3::new(0.0, 2000.0, 0.0),
+    //     Arc::new(DiffuseLight::new(Arc::new(SolidColor::new(&Color::new(1.0, 1.0, 1.0))))),
+    // )));
+
+    world.add(Arc::new(Sphere::new(
+        Point3::new(490.0, 155.0, -50.0),
+        100.0,
+        Arc::new(Dielectric::new(1.5)),
+    )));
+    let inside_number = 78;
+    for i in 0..inside_number {
+        let phi = random_double_range(0.0, PI);
+        let theta = random_double_range(0.0, 2.0 * PI);
+
+        let r = random_double_range(50.0, 90.0);
+        let rin = random_double_range(20.0, r);
+
+        let x = Point3::new(
+            r * phi.sin(),
+            r * phi.cos() * theta.sin(),
+            r * phi.cos() * theta.cos(),
+        ) + Point3::new(490.0, 155.0, -50.0);
+        let y = Point3::new(
+            rin * phi.sin(),
+            rin * phi.cos() * theta.sin(),
+            rin * phi.cos() * theta.cos(),
+        ) + Point3::new(490.0, 155.0, -50.0);
+
+        let sz = random_double_range(4.0, 9.0);
+
+        let rnd = random_double();
+
+        if rnd < 0.5 {
+            world.add(Arc::new(Sphere::new_move(
+                x,
+                y,
+                sz,
+                Arc::new(Lambertian::new(&Color::new(
+                    random_double(),
+                    random_double(),
+                    random_double(),
+                ))),
+            )));
+        } else if rnd < 0.9 {
+            world.add(Arc::new(Sphere::new_move(
+                x,
+                y,
+                sz,
+                Arc::new(Metal::new(
+                    &Color::new(random_double(), random_double(), random_double()),
+                    random_double(),
+                )),
+            )));
+        } else {
+            world.add(Arc::new(Sphere::new_move(
+                x,
+                y,
+                sz,
+                Arc::new(Dielectric::new(random_double_range(0.0, 2.0))),
+            )));
+        }
+    }
+    // world.add(Arc::new(Sphere::new(Point3::new(490.0 - 70.0, 155.0, -50.0), 15.0, Arc::new(Lambertian::new(&Color::new(0.8, 0.0, 0.0))))));
+
     let mut cam = Camera::new();
 
-    cam.aspect_ratio = 1.0;
+    cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 600;
     cam.samples_per_pixel = 1000;
     cam.max_depth = 50;
