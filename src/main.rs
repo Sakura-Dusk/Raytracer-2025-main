@@ -448,7 +448,7 @@ fn try_use_model() {
 
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 1600;
-    cam.samples_per_pixel = 100;
+    cam.samples_per_pixel = 2000;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 
