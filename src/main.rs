@@ -193,15 +193,6 @@ fn try_use_model() {
     );
 
     load_model(
-        "minimalist-weedy/weedy.obj",
-        "minimalist-weedy/weedy.mtl",
-        &mut world,
-        180.0,
-        Vec3::new(580.0, 510.0, 610.0),
-        3000.0,
-    );
-
-    load_model(
         "arknights-warehouse/source/Arknights_Warehouse/Warehouse.obj",
         "arknights-warehouse/source/Arknights_Warehouse/Warehouse.mtl",
         &mut world,
