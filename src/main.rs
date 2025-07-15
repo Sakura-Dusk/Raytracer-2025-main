@@ -4,6 +4,7 @@ mod pdf;
 mod rtweekend;
 
 use crate::camera::Camera;
+use crate::material::hittable::bvh::BvhNode;
 use crate::material::hittable::hittable_list::HittableList;
 use crate::material::hittable::quad::{Quad, make_box};
 use crate::material::hittable::sphere::Sphere;
@@ -280,6 +281,7 @@ fn try_use_model() {
     //     Point3::new(80.0, 0.0, 0.0),
     //     Arc::new(lava_floor.clone()),
     // )));
+    let mut glass_world = HittableList::new();
     for i in 1..50 {
         let glass = Arc::new(Dielectric::new(random_double_range(0.0, 2.0)));
         let x = Point3::new(
@@ -287,7 +289,7 @@ fn try_use_model() {
             80.0 + 0.42 * i as f64 + random_double_range(0.0, 7.0 * i as f64),
             20.0 + random_double_range(0.0, 5.0 * i as f64),
         );
-        world.add(Arc::new(Sphere::new(
+        glass_world.add(Arc::new(Sphere::new(
             x,
             random_double_range(1.0, 1.0 + i as f64 * 0.42),
             glass.clone(),
@@ -298,7 +300,9 @@ fn try_use_model() {
         // world.add(Arc::new(Quad::new(x, y, z, metal.clone())));
         // world.add(Arc::new(Quad::new(x - n * 0.01, z, y, metal.clone())));
     }
+    world.add(Arc::new(BvhNode::new(glass_world)));
 
+    let mut circle_world = HittableList::new();
     let circle_number = 100;
     for i in 0..circle_number {
         let y = random_double_range(-5.0, 5.0);
@@ -326,7 +330,7 @@ fn try_use_model() {
         // else {cl = Color::new(random_double_range(3.0, 5.0), random_double_range(3.0, 5.0), random_double_range(3.0, 5.0));}
 
         if rd < 0.3 {
-            world.add(Arc::new(Sphere::new(
+            circle_world.add(Arc::new(Sphere::new(
                 x,
                 sz,
                 Arc::new(DiffuseLight::new(Arc::new(SolidColor::new(&cl)))),
@@ -337,7 +341,7 @@ fn try_use_model() {
             //     empty_material.clone(),
             // )));
         } else if rd < 0.7 {
-            world.add(Arc::new(Sphere::new(
+            circle_world.add(Arc::new(Sphere::new(
                 x,
                 sz,
                 Arc::new(Metal::new(
@@ -346,13 +350,14 @@ fn try_use_model() {
                 )),
             )));
         } else {
-            world.add(Arc::new(Sphere::new(
+            circle_world.add(Arc::new(Sphere::new(
                 x,
                 sz,
                 Arc::new(Dielectric::new(random_double_range(0.0, 2.0))),
             )));
         }
     }
+    world.add(Arc::new(BvhNode::new(circle_world)));
 
     // world.add(Arc::new(Quad::new(
     //     Point3::new(-1000.0, -1000.0, -900.0),
@@ -366,6 +371,8 @@ fn try_use_model() {
         100.0,
         Arc::new(Dielectric::new(1.5)),
     )));
+
+    let mut inside_world = HittableList::new();
     let inside_number = 78;
     for i in 0..inside_number {
         let phi = random_double_range(0.0, PI);
@@ -390,7 +397,7 @@ fn try_use_model() {
         let rnd = random_double();
 
         if rnd < 0.5 {
-            world.add(Arc::new(Sphere::new_move(
+            inside_world.add(Arc::new(Sphere::new_move(
                 x,
                 y,
                 sz,
@@ -401,7 +408,7 @@ fn try_use_model() {
                 ))),
             )));
         } else if rnd < 0.9 {
-            world.add(Arc::new(Sphere::new_move(
+            inside_world.add(Arc::new(Sphere::new_move(
                 x,
                 y,
                 sz,
@@ -411,7 +418,7 @@ fn try_use_model() {
                 )),
             )));
         } else {
-            world.add(Arc::new(Sphere::new_move(
+            inside_world.add(Arc::new(Sphere::new_move(
                 x,
                 y,
                 sz,
@@ -419,6 +426,7 @@ fn try_use_model() {
             )));
         }
     }
+    world.add(Arc::new(BvhNode::new(inside_world)));
 
     world.add(Arc::new(Sphere::new(
         Point3::new(600.0, 155.0, -250.0),
@@ -440,7 +448,7 @@ fn try_use_model() {
 
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 1600;
-    cam.samples_per_pixel = 1000;
+    cam.samples_per_pixel = 100;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 
