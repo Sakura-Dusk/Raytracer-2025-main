@@ -1,13 +1,9 @@
-use crate::material::texture::rtw_stb_image::RtwImage;
 use crate::material::texture::{MappedTexture, SolidColor, Texture};
 use crate::rtweekend::color::Color;
 use crate::rtweekend::vec3::Vec3;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::net::ToSocketAddrs;
-use std::path::Path;
-use std::ptr::null_mut;
 use std::sync::Arc;
 
 pub struct MtlInfo {

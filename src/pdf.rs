@@ -16,7 +16,7 @@ pub trait Pdf: Send + Sync {
 pub struct SpherePdf {}
 
 impl Pdf for SpherePdf {
-    fn value(&self, direction: &Vec3) -> f64 {
+    fn value(&self, _: &Vec3) -> f64 {
         1.0 / (4.0 * PI)
     }
 

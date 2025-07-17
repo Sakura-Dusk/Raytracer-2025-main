@@ -8,7 +8,7 @@ use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{
     Point3, Vec3, dot, random_unit_vector, reflect, refract, unit_vector,
 };
-use crate::rtweekend::{PI, random_double, vec3};
+use crate::rtweekend::{PI, random_double};
 use std::sync::Arc;
 
 pub mod hittable;
@@ -34,15 +34,15 @@ impl ScatterRecord {
 }
 
 pub trait Material: Send + Sync {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
+    fn scatter(&self, _: &Ray, _: &HitRecord, _: &mut ScatterRecord) -> bool {
         false
     }
 
-    fn emitted(&self, r_in: &Ray, rec: &HitRecord, u: f64, v: f64, p: &Point3) -> Color {
+    fn emitted(&self, _: &Ray, _: &HitRecord, _: f64, _: f64, _: &Point3) -> Color {
         Color::new(0.00, 0.00, 0.00)
     }
 
-    fn scattering_pdf(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+    fn scattering_pdf(&self, _: &Ray, _: &HitRecord, _: &Ray) -> f64 {
         0.0
     }
 
@@ -50,7 +50,7 @@ pub trait Material: Send + Sync {
         false
     }
 
-    fn get_normal_mapping(&self, u: f64, v: f64) -> Vec3 {
+    fn get_normal_mapping(&self, _: f64, _: f64) -> Vec3 {
         Vec3::default()
     }
 
@@ -58,7 +58,7 @@ pub trait Material: Send + Sync {
         false
     }
 
-    fn get_alpha_mapping(&self, u: f64, v: f64) -> f64 {
+    fn get_alpha_mapping(&self, _: f64, _: f64) -> f64 {
         0.0
     }
 
@@ -66,7 +66,7 @@ pub trait Material: Send + Sync {
         false
     }
 
-    fn get_light_mapping(&self, u: f64, v: f64) -> Color {
+    fn get_light_mapping(&self, _: f64, _: f64) -> Color {
         Vec3::default()
     }
 }
@@ -98,14 +98,14 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
+    fn scatter(&self, _: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
         srec.attenuation = self.tex.value(rec.u, rec.v, &rec.p);
         srec.pdf_ptr = Arc::new(CosinePdf::new(&rec.normal));
         srec.skip_pdf = false;
         true
     }
 
-    fn scattering_pdf(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+    fn scattering_pdf(&self, _: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
         let cos_theta = dot(&rec.normal, &unit_vector(&scattered.direction));
         if cos_theta < 0.0 { 0.0 } else { cos_theta / PI }
     }
@@ -179,7 +179,7 @@ impl Material for Dielectric {
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
         let cannot_refract = ri * sin_theta > 1.0;
-        let direction: vec3::Vec3;
+        let direction: Vec3;
 
         if cannot_refract || Dielectric::reflectance(cos_theta, ri) > random_double() {
             direction = reflect(&unit_direction, &rec.normal);
@@ -209,7 +209,7 @@ impl DiffuseLight {
 }
 
 impl Material for DiffuseLight {
-    fn emitted(&self, r_in: &Ray, rec: &HitRecord, u: f64, v: f64, p: &Point3) -> Color {
+    fn emitted(&self, _: &Ray, rec: &HitRecord, u: f64, v: f64, p: &Point3) -> Color {
         if !rec.front_face {
             return Color::new(0.00, 0.00, 0.00);
         }
@@ -234,14 +234,14 @@ impl Isotropic {
 }
 
 impl Material for Isotropic {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
+    fn scatter(&self, _: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
         srec.attenuation = self.tex.value(rec.u, rec.v, &rec.p);
         srec.pdf_ptr = Arc::new(SpherePdf::default());
         srec.skip_pdf = false;
         true
     }
 
-    fn scattering_pdf(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+    fn scattering_pdf(&self, _: &Ray, _: &HitRecord, _: &Ray) -> f64 {
         1.0 / (4.0 * PI)
     }
 }

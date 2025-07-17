@@ -1,14 +1,11 @@
 use crate::material::Material;
 use crate::material::hittable::aabb::AABB;
-use crate::material::hittable::hittable_list::HittableList;
-use crate::material::hittable::quad::Quad;
-use crate::material::hittable::sphere::Sphere;
 use crate::material::hittable::{HitRecord, Hittable};
 use crate::material::texture::UV;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, cross, dot, unit_vector};
-use crate::rtweekend::{PI, random_double};
+use crate::rtweekend::{random_double};
 use std::f64::INFINITY;
 use std::sync::Arc;
 
@@ -162,7 +159,7 @@ impl Hittable for Triangle {
         let tangent = unit_vector(&(self.tangent - normal * dot(&self.tangent, &normal)));
         let bitangent = cross(&normal, &tangent);
 
-        let alpha_ = self.mat.get_alpha_mapping(uv.u, uv.v);
+        let _ = self.mat.get_alpha_mapping(uv.u, uv.v);
         let x = random_double();
         if x <= alpha {
             return false;

@@ -56,11 +56,11 @@ impl Mul<f64> for UV {
 pub trait Texture: Send + Sync {
     fn value(&self, u: f64, v: f64, p: &Point3) -> Color;
 
-    fn normal(&self, u: f64, v: f64, normal: Vec3, tangent: Vec3, bitangent: Vec3) -> Option<Vec3> {
+    fn normal(&self, _: f64, _: f64, _: Vec3, _: Vec3, _: Vec3) -> Option<Vec3> {
         None
     }
 
-    fn alpha(&self, u: f64, v: f64) -> Option<f64> {
+    fn alpha(&self, _: f64, _: f64) -> Option<f64> {
         None
     }
 }
@@ -81,7 +81,7 @@ impl SolidColor {
     }
 }
 impl Texture for SolidColor {
-    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+    fn value(&self, _: f64, _: f64, _: &Point3) -> Color {
         self.albedo
     }
 }
@@ -139,7 +139,7 @@ impl ImageTexture {
 }
 
 impl Texture for ImageTexture {
-    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+    fn value(&self, u: f64, v: f64, _: &Point3) -> Color {
         if self.image.height() == 0 {
             return Color::new(0.0, 1.0, 1.0);
         }
@@ -176,7 +176,7 @@ impl NoiseTexture {
 }
 
 impl Texture for NoiseTexture {
-    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+    fn value(&self, _: f64, _: f64, p: &Point3) -> Color {
         Color::new(0.5, 0.5, 0.5) * (1.0 + (self.scale * p.z + 10.0 * self.noise.turb(*p, 7)).sin())
     }
 }
@@ -212,7 +212,7 @@ impl MappedTexture {
 }
 
 impl Texture for MappedTexture {
-    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+    fn value(&self, u: f64, v: f64, _: &Point3) -> Color {
         if self.color_map.height() == 0 {
             return Color::new(0.0, 1.0, 1.0);
         }

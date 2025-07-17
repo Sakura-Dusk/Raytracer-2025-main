@@ -8,12 +8,10 @@ pub(crate) mod triangle;
 
 use crate::material::hittable::aabb::AABB;
 use crate::material::{Lambertian, Material};
-use crate::rtweekend::interval;
 use crate::rtweekend::interval::Interval;
-use crate::rtweekend::vec3::ray;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, dot};
-use crate::rtweekend::{degrees_to_radians, vec3};
+use crate::rtweekend::{degrees_to_radians};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -70,11 +68,11 @@ pub trait Hittable: Send + Sync {
 
     fn bounding_box(&self) -> AABB;
 
-    fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
+    fn pdf_value(&self, _: &Point3, _: &Vec3) -> f64 {
         0.0
     }
 
-    fn random(&self, origin: &Point3) -> Vec3 {
+    fn random(&self, _: &Point3) -> Vec3 {
         Vec3::new(1.0, 0.0, 0.0)
     }
 }
