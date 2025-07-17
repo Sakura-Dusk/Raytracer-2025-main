@@ -8,10 +8,10 @@ pub(crate) mod triangle;
 
 use crate::material::hittable::aabb::AABB;
 use crate::material::{Lambertian, Material};
+use crate::rtweekend::degrees_to_radians;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, dot};
-use crate::rtweekend::{degrees_to_radians};
 use std::sync::Arc;
 
 #[derive(Clone)]

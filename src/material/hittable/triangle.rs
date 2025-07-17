@@ -3,9 +3,9 @@ use crate::material::hittable::aabb::AABB;
 use crate::material::hittable::{HitRecord, Hittable};
 use crate::material::texture::UV;
 use crate::rtweekend::interval::Interval;
+use crate::rtweekend::random_double;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, cross, dot, unit_vector};
-use crate::rtweekend::{random_double};
 use std::f64::INFINITY;
 use std::sync::Arc;
 
