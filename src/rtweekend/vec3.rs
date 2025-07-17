@@ -182,14 +182,14 @@ pub fn random_cosine_direction() -> Vec3 {
     Vec3::new(x, y, z)
 }
 
-pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
-    let on_unit_sphere = random_unit_vector();
-    if dot(&on_unit_sphere, &normal) > 0.0 {
-        on_unit_sphere
-    } else {
-        -on_unit_sphere
-    }
-}
+// pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
+//     let on_unit_sphere = random_unit_vector();
+//     if dot(&on_unit_sphere, normal) > 0.0 {
+//         on_unit_sphere
+//     } else {
+//         -on_unit_sphere
+//     }
+// }
 
 pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
     *v - 2f64 * dot(v, n) * *n

@@ -1,4 +1,4 @@
-use crate::material::hittable::aabb::AABB;
+use crate::material::hittable::aabb::Aabb;
 use crate::material::hittable::hittable_list::HittableList;
 use crate::material::hittable::{HitRecord, Hittable};
 use crate::rtweekend::interval::Interval;
@@ -9,7 +9,7 @@ use std::sync::Arc;
 pub struct BvhNode {
     left: Arc<dyn Hittable>,
     right: Arc<dyn Hittable>,
-    bbox: AABB,
+    bbox: Aabb,
 }
 
 impl BvhNode {
@@ -21,9 +21,9 @@ impl BvhNode {
 
     fn build(objects: &mut [Arc<dyn Hittable>], start: usize, end: usize) -> Self {
         // 首先计算所有对象的包围盒
-        let mut bbox = AABB::EMPTY;
+        let mut bbox = Aabb::EMPTY;
         for object in &objects[start..end] {
-            bbox = AABB::new_merge(&bbox, &object.bounding_box());
+            bbox = Aabb::new_merge(&bbox, &object.bounding_box());
         }
 
         // 选择最长轴进行分割
@@ -56,7 +56,7 @@ impl BvhNode {
             }
         };
 
-        let bbox = AABB::new_merge(&left.bounding_box(), &right.bounding_box());
+        let bbox = Aabb::new_merge(&left.bounding_box(), &right.bounding_box());
         Self { left, right, bbox }
     }
 
@@ -98,7 +98,7 @@ impl Hittable for BvhNode {
         hit_left || hit_right
     }
 
-    fn bounding_box(&self) -> AABB {
+    fn bounding_box(&self) -> Aabb {
         self.bbox
     }
 }

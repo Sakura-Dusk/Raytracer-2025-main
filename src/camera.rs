@@ -121,9 +121,9 @@ impl Camera {
 
         Vec3::new(px, py, 0.0)
     }
-    fn sample_square(&self) -> Vec3 {
-        Vec3::new(random_double() - 0.5, random_double() - 0.5, 0.0)
-    }
+    // fn sample_square(&self) -> Vec3 {
+    //     Vec3::new(random_double() - 0.5, random_double() - 0.5, 0.0)
+    // }
 
     fn defocus_disk_sample(&self) -> Point3 {
         let p = random_in_unit_disk();
@@ -158,8 +158,8 @@ impl Camera {
         }
 
         let mut rec: hittable::HitRecord = hittable::HitRecord::new();
-        if !world.hit(&r, &mut Interval::new(0.001, f64::INFINITY), &mut rec) {
-            return self.background.clone();
+        if !world.hit(r, &mut Interval::new(0.001, f64::INFINITY), &mut rec) {
+            return self.background;
         }
 
         let mut srec = ScatterRecord::default();
@@ -183,8 +183,7 @@ impl Camera {
         let scattering_pdf = rec.mat.scattering_pdf(r, &rec, &scattered);
 
         let sample_color = self.ray_color(&scattered, depth - 1, world, lights.clone());
-        let color_from_scatter =
-            (srec.attenuation.clone() * scattering_pdf * sample_color) / pdf_value;
+        let color_from_scatter = (srec.attenuation * scattering_pdf * sample_color) / pdf_value;
 
         color_from_emission + color_from_scatter
     }

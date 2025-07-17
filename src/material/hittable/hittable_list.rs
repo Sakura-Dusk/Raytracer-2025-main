@@ -1,4 +1,4 @@
-use crate::material::hittable::aabb::AABB;
+use crate::material::hittable::aabb::Aabb;
 use crate::material::hittable::{HitRecord, Hittable};
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::random_int_range;
@@ -8,25 +8,25 @@ use std::sync::Arc;
 
 pub(crate) struct HittableList {
     pub(crate) objects: Vec<Arc<dyn Hittable>>,
-    bbox: AABB,
+    bbox: Aabb,
 }
 
 impl HittableList {
     pub fn new() -> HittableList {
         HittableList {
             objects: Vec::new(),
-            bbox: AABB::default(),
+            bbox: Aabb::default(),
         }
     }
 
-    pub fn clear(&mut self) {
-        self.objects.clear();
-    }
+    // pub fn clear(&mut self) {
+    //     self.objects.clear();
+    // }
 
     pub fn add(&mut self, object: Arc<dyn Hittable>) {
         let bbox = object.bounding_box();
         self.objects.push(object);
-        self.bbox = AABB::new_merge(&self.bbox, &bbox);
+        self.bbox = Aabb::new_merge(&self.bbox, &bbox);
     }
 }
 
@@ -38,7 +38,7 @@ impl Hittable for HittableList {
 
         for object in &self.objects {
             if object.hit(
-                &ray,
+                ray,
                 &mut Interval::new(t.min, closest_so_far),
                 &mut temp_rec,
             ) {
@@ -51,8 +51,8 @@ impl Hittable for HittableList {
         hit_anything
     }
 
-    fn bounding_box(&self) -> AABB {
-        self.bbox.clone()
+    fn bounding_box(&self) -> Aabb {
+        self.bbox
     }
 
     fn pdf_value(&self, origin: &Vec3, direction: &Vec3) -> f64 {

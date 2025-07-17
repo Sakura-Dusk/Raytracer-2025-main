@@ -1,12 +1,11 @@
 use crate::material::Material;
-use crate::material::hittable::aabb::AABB;
+use crate::material::hittable::aabb::Aabb;
 use crate::material::hittable::{HitRecord, Hittable};
 use crate::material::onb::Onb;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3};
 use crate::rtweekend::{PI, random_double, vec3};
-use std::f64::INFINITY;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -14,7 +13,7 @@ pub(crate) struct Sphere {
     pub(crate) center: Ray,
     pub(crate) radius: f64,
     pub(crate) mat: Arc<dyn Material>,
-    pub(crate) bbox: AABB,
+    pub(crate) bbox: Aabb,
 }
 
 impl Sphere {
@@ -24,7 +23,7 @@ impl Sphere {
             center: Ray::new(static_center, Vec3::new(0.0, 0.0, 0.0)),
             radius: radius.max(0.0),
             mat,
-            bbox: AABB::new_points(static_center - rvec, static_center + rvec),
+            bbox: Aabb::new_points(static_center - rvec, static_center + rvec),
         }
     }
 
@@ -40,9 +39,9 @@ impl Sphere {
             center,
             radius: radius.max(0.0),
             mat,
-            bbox: AABB::new_merge(
-                &AABB::new_points(center.at(0.0) - rvec, center.at(0.0) + rvec),
-                &AABB::new_points(center.at(1.0) - rvec, center.at(1.0) + rvec),
+            bbox: Aabb::new_merge(
+                &Aabb::new_points(center.at(0.0) - rvec, center.at(0.0) + rvec),
+                &Aabb::new_points(center.at(1.0) - rvec, center.at(1.0) + rvec),
             ),
         }
     }
@@ -104,8 +103,8 @@ impl Hittable for Sphere {
         true
     }
 
-    fn bounding_box(&self) -> AABB {
-        self.bbox.clone()
+    fn bounding_box(&self) -> Aabb {
+        self.bbox
     }
 
     fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
@@ -114,13 +113,13 @@ impl Hittable for Sphere {
         let mut rec = HitRecord::new();
         if !self.hit(
             &Ray::new(*origin, *direction),
-            &mut Interval::new(0.001, INFINITY),
+            &mut Interval::new(0.001, f64::INFINITY),
             &mut rec,
         ) {
             return 0.0;
         }
 
-        let dist_squared = (self.center.at(0.0) - origin.clone()).length_squared();
+        let dist_squared = (self.center.at(0.0) - *origin).length_squared();
         let cos_theta_max = (1.0 - self.radius * self.radius / dist_squared).sqrt();
         let solid_angle = 2.0 * PI * (1.0 - cos_theta_max);
 
@@ -128,7 +127,7 @@ impl Hittable for Sphere {
     }
 
     fn random(&self, origin: &Point3) -> Vec3 {
-        let direction = self.center.at(0.0) - origin.clone();
+        let direction = self.center.at(0.0) - *origin;
         let distance_squared = direction.length_squared();
         let uvw = Onb::new(&direction);
         uvw.transform(&self.random_to_sphere(self.radius, distance_squared))

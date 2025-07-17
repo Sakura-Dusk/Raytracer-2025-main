@@ -17,13 +17,13 @@ impl Onb {
         Self { axis: [v0, v1, v2] }
     }
 
-    pub fn u(&self) -> &Vec3 {
-        &self.axis[0]
-    }
+    // pub fn u(&self) -> &Vec3 {
+    //     &self.axis[0]
+    // }
 
-    pub fn v(&self) -> &Vec3 {
-        &self.axis[1]
-    }
+    // pub fn v(&self) -> &Vec3 {
+    //     &self.axis[1]
+    // }
 
     pub fn w(&self) -> &Vec3 {
         &self.axis[2]

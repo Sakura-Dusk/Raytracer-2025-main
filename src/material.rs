@@ -72,7 +72,7 @@ pub trait Material: Send + Sync {
 }
 
 impl dyn Material {
-    pub(crate) fn new() {}
+    // pub(crate) fn new() {}
 }
 
 pub(crate) struct Lambertian {
@@ -88,7 +88,7 @@ impl Lambertian {
 
     pub(crate) fn new(x: &Color) -> Lambertian {
         Lambertian {
-            tex: Arc::new(SolidColor::new(&x)),
+            tex: Arc::new(SolidColor::new(x)),
         }
     }
 
@@ -117,16 +117,16 @@ pub(crate) struct Metal {
 }
 
 impl Metal {
-    pub(crate) fn default() -> Metal {
-        Metal {
-            albedo: Color::default(),
-            fuzz: 0.0,
-        }
-    }
+    // pub(crate) fn default() -> Metal {
+    //     Metal {
+    //         albedo: Color::default(),
+    //         fuzz: 0.0,
+    //     }
+    // }
 
     pub(crate) fn new(x: &Color, fuzz: f64) -> Metal {
         Metal {
-            albedo: x.clone(),
+            albedo: *x,
             fuzz: if fuzz < 1.0 { fuzz } else { 1.0 },
         }
     }
@@ -137,7 +137,7 @@ impl Material for Metal {
         let reflected = reflect(&r_in.direction, &rec.normal);
         let reflected = unit_vector(&reflected) + (self.fuzz * random_unit_vector());
 
-        srec.attenuation = self.albedo.clone();
+        srec.attenuation = self.albedo;
         srec.pdf_ptr = Arc::new(SpherePdf::default());
         srec.skip_pdf = true;
         srec.skip_pdf_ray = Ray::new_move(rec.p, reflected, r_in.time);
@@ -179,13 +179,12 @@ impl Material for Dielectric {
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
         let cannot_refract = ri * sin_theta > 1.0;
-        let direction: Vec3;
-
-        if cannot_refract || Dielectric::reflectance(cos_theta, ri) > random_double() {
-            direction = reflect(&unit_direction, &rec.normal);
-        } else {
-            direction = refract(&unit_direction, &rec.normal, ri);
-        }
+        let direction: Vec3 =
+            if cannot_refract || Dielectric::reflectance(cos_theta, ri) > random_double() {
+                reflect(&unit_direction, &rec.normal)
+            } else {
+                refract(&unit_direction, &rec.normal, ri)
+            };
 
         srec.skip_pdf_ray = Ray::new_move(rec.p, direction, r_in.time);
         true
@@ -222,15 +221,15 @@ pub struct Isotropic {
 }
 
 impl Isotropic {
-    pub fn new(tex: Arc<dyn Texture>) -> Isotropic {
-        Isotropic { tex }
-    }
-
-    pub fn new_color(albedo: &Color) -> Isotropic {
-        Isotropic {
-            tex: Arc::new(SolidColor::new(albedo)),
-        }
-    }
+    // pub fn new(tex: Arc<dyn Texture>) -> Isotropic {
+    //     Isotropic { tex }
+    // }
+    //
+    // pub fn new_color(albedo: &Color) -> Isotropic {
+    //     Isotropic {
+    //         tex: Arc::new(SolidColor::new(albedo)),
+    //     }
+    // }
 }
 
 impl Material for Isotropic {
@@ -277,9 +276,9 @@ impl Mapping {
         self.normal_mapping = Some(normal_mapping);
     }
 
-    pub fn set_alpha_mapping(&mut self, alpha_mapping: RtwImage) {
-        self.alpha_mapping = Some(alpha_mapping);
-    }
+    // pub fn set_alpha_mapping(&mut self, alpha_mapping: RtwImage) {
+    //     self.alpha_mapping = Some(alpha_mapping);
+    // }
 
     pub fn set_light_mapping(&mut self, light_mapping: RtwImage) {
         self.light_mapping = Some(light_mapping);
@@ -306,11 +305,7 @@ impl Material for Mapping {
     }
 
     fn check_normal_mapping(&self) -> bool {
-        if self.normal_mapping.is_some() {
-            true
-        } else {
-            false
-        }
+        self.normal_mapping.is_some()
     }
 
     fn get_normal_mapping(&self, u: f64, v: f64) -> Vec3 {
@@ -329,11 +324,7 @@ impl Material for Mapping {
     }
 
     fn check_alpha_mapping(&self) -> bool {
-        if self.alpha_mapping.is_some() {
-            true
-        } else {
-            false
-        }
+        self.alpha_mapping.is_some()
     }
 
     fn get_alpha_mapping(&self, u: f64, v: f64) -> f64 {
@@ -348,11 +339,7 @@ impl Material for Mapping {
     }
 
     fn check_light_mapping(&self) -> bool {
-        if self.light_mapping.is_some() {
-            true
-        } else {
-            false
-        }
+        self.light_mapping.is_some()
     }
 
     fn get_light_mapping(&self, u: f64, v: f64) -> Color {

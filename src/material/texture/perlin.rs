@@ -39,10 +39,13 @@ impl Perlin {
         let k = p.z.floor() as i32;
         let mut c = [[[Vec3::new(0.0, 0.0, 0.0); 2]; 2]; 2];
 
-        for di in 0..2 {
-            for dj in 0..2 {
-                for dk in 0..2 {
-                    c[di][dj][dk] = *self.randvec.index(
+        for (di, _iter) in c.iter_mut().enumerate() {
+            // for di in 0..2 {
+            for (dj, __iter) in _iter.iter_mut().enumerate() {
+                // for dj in 0..2 {
+                for (dk, ___iter) in __iter.iter_mut().enumerate().take(2) {
+                    // for dk in 0..2 {
+                    *___iter = *self.randvec.index(
                         (self.perm_x[((i + di as i32) & 255) as usize]
                             ^ self.perm_y[((j + dj as i32) & 255) as usize]
                             ^ self.perm_z[((k + dk as i32) & 255) as usize])
@@ -78,7 +81,7 @@ impl Perlin {
         p
     }
 
-    fn permute(p: &mut Vec<i32>, n: usize) {
+    fn permute(p: &mut [i32], n: usize) {
         for i in (0..n).rev() {
             let target = random_int_range(0, i as i32) as usize;
             p.swap(i, target);
@@ -91,7 +94,7 @@ impl Perlin {
         let ww = w * w * (3.0 - 2.0 * w);
         let mut accum = 0.0;
 
-        for i in 0..2 {
+        for (i, _item) in c.iter().enumerate().take(2) {
             for j in 0..2 {
                 for k in 0..2 {
                     let weight_v = Vec3::new(u - i as f64, v - j as f64, w - k as f64);

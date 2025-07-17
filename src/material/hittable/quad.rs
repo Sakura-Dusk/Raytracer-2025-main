@@ -1,12 +1,11 @@
 use crate::material::Material;
-use crate::material::hittable::aabb::AABB;
+use crate::material::hittable::aabb::Aabb;
 use crate::material::hittable::hittable_list::HittableList;
 use crate::material::hittable::{HitRecord, Hittable};
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::random_double;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, cross, dot, unit_vector};
-use std::f64::INFINITY;
 use std::sync::Arc;
 
 pub struct Quad {
@@ -15,7 +14,7 @@ pub struct Quad {
     v: Vec3,
     w: Vec3,
     mat: Arc<dyn Material>,
-    bbox: AABB,
+    bbox: Aabb,
     normal: Vec3,
     d: f64,
     area: f64,
@@ -29,7 +28,7 @@ impl Quad {
             v,
             w: Vec3::default(),
             mat,
-            bbox: AABB::default(),
+            bbox: Aabb::default(),
             normal: Vec3::default(),
             d: 0.0,
             area: 0.0,
@@ -46,9 +45,9 @@ impl Quad {
     }
 
     fn set_bounding_box(&mut self) {
-        let bbox_diagonal1 = AABB::new_points(self.q, self.q + self.u + self.v);
-        let bbox_diagonal2 = AABB::new_points(self.q + self.u, self.q + self.v);
-        self.bbox = AABB::new_merge(&bbox_diagonal1, &bbox_diagonal2);
+        let bbox_diagonal1 = Aabb::new_points(self.q, self.q + self.u + self.v);
+        let bbox_diagonal2 = Aabb::new_points(self.q + self.u, self.q + self.v);
+        self.bbox = Aabb::new_merge(&bbox_diagonal1, &bbox_diagonal2);
     }
 
     fn is_interior(a: f64, b: f64, rec: &mut HitRecord) -> bool {
@@ -88,7 +87,7 @@ impl Hittable for Quad {
             return false;
         }
 
-        if self.mat.check_alpha_mapping() == true {
+        if self.mat.check_alpha_mapping() {
             let stop_p = self.mat.get_alpha_mapping(alpha, beta);
             if random_double() < stop_p {
                 return false;
@@ -103,7 +102,7 @@ impl Hittable for Quad {
 
         true
     }
-    fn bounding_box(&self) -> AABB {
+    fn bounding_box(&self) -> Aabb {
         self.bbox
     }
 
@@ -111,7 +110,7 @@ impl Hittable for Quad {
         let mut rec = HitRecord::new();
         if !self.hit(
             &Ray::new(*origin, *direction),
-            &mut Interval::new(0.001, INFINITY),
+            &mut Interval::new(0.001, f64::INFINITY),
             &mut rec,
         ) {
             return 0.0;

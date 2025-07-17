@@ -1,7 +1,7 @@
 use crate::material::Lambertian;
 use crate::material::hittable::bvh::BvhNode;
 use crate::material::hittable::hittable_list::HittableList;
-use crate::material::hittable::triangle::Triangle;
+use crate::material::hittable::triangle::{Nquv, Tquv, Triangle};
 use crate::material::hittable::{RotateY, Translate};
 use crate::material::texture::UV;
 use crate::material::texture::mtl::{create_texture, process_mtl_file};
@@ -13,7 +13,7 @@ use tobj::LoadOptions;
 
 pub fn load_obj(obj_path: &str, mtl_path: &str, scale: f64) -> Vec<Triangle> {
     let (models, materials) = tobj::load_obj(
-        &format!("images/{}", obj_path),
+        format!("images/{}", obj_path),
         &LoadOptions {
             triangulate: true,
             single_index: true,
@@ -133,12 +133,8 @@ pub fn load_obj(obj_path: &str, mtl_path: &str, scale: f64) -> Vec<Triangle> {
                 v0,
                 v1,
                 v2,
-                uv0,
-                uv1,
-                uv2,
-                n0,
-                n1,
-                n2,
+                Tquv::new(uv0, uv1, uv2),
+                Nquv::new(n0, n1, n2),
                 material.clone(),
             ));
         }

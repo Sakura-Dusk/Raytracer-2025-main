@@ -79,7 +79,7 @@ pub fn process_mtl_file(path: &str) -> HashMap<String, MtlInfo> {
 
 pub fn create_texture(material: &MtlInfo) -> Arc<dyn Texture + Send + Sync> {
     // 优先检查是否有漫反射贴图 (map_Kd)
-    if let Some(_) = &material.map_kd {
+    if material.map_kd.is_some() {
         Arc::new(MappedTexture::new(
             material
                 .map_kd

@@ -1,31 +1,52 @@
 use crate::material::Material;
-use crate::material::hittable::aabb::AABB;
+use crate::material::hittable::aabb::Aabb;
 use crate::material::hittable::{HitRecord, Hittable};
 use crate::material::texture::UV;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::random_double;
 use crate::rtweekend::vec3::ray::Ray;
 use crate::rtweekend::vec3::{Point3, Vec3, cross, dot, unit_vector};
-use std::f64::INFINITY;
 use std::sync::Arc;
 
 pub struct Triangle {
     q: Point3,
     u: Vec3,
     v: Vec3,
-    tq: UV,
-    tu: UV,
-    tv: UV,
+    tquv: Tquv,
     w: Vec3,
     mat: Arc<dyn Material>,
-    bbox: AABB,
+    bbox: Aabb,
     normal: Vec3,
-    nq: Vec3,
-    nu: Vec3,
-    nv: Vec3,
+    nquv: Nquv,
     tangent: Vec3,
     d: f64,
     area: f64,
+}
+
+#[derive(Clone)]
+pub struct Tquv {
+    tq: UV,
+    tu: UV,
+    tv: UV,
+}
+
+impl Tquv {
+    pub(crate) fn new(tq: UV, tu: UV, tv: UV) -> Tquv {
+        Tquv { tq, tu, tv }
+    }
+}
+
+#[derive(Clone)]
+pub struct Nquv {
+    nq: Vec3,
+    nu: Vec3,
+    nv: Vec3,
+}
+
+impl Nquv {
+    pub(crate) fn new(nq: Vec3, nu: Vec3, nv: Vec3) -> Nquv {
+        Nquv { nq, nu, nv }
+    }
 }
 
 impl Triangle {
@@ -33,28 +54,20 @@ impl Triangle {
         q: Point3,
         u: Vec3,
         v: Vec3,
-        tq: UV,
-        tu: UV,
-        tv: UV,
-        nq: Vec3,
-        nu: Vec3,
-        nv: Vec3,
+        tquv: Tquv,
+        nquv: Nquv,
         mat: Arc<dyn Material>,
     ) -> Self {
         let mut res = Self {
             q,
             u,
             v,
-            tq,
-            tu: tu.clone(),
-            tv: tv.clone(),
+            tquv: tquv.clone(),
+            nquv: nquv.clone(),
             w: Vec3::default(),
             mat,
-            bbox: AABB::default(),
+            bbox: Aabb::default(),
             normal: Vec3::default(),
-            nq,
-            nu,
-            nv,
             tangent: Vec3::default(),
             d: 0.0,
             area: 0.0,
@@ -63,8 +76,8 @@ impl Triangle {
         res.normal = unit_vector(&n);
         res.d = dot(&res.normal, &q);
         res.w = n / dot(&n, &n);
-        res.tangent = (u * tv.v.clone() - v * tu.u.clone())
-            / (tu.u.clone() * tv.v.clone() - tu.v.clone() * tv.u.clone());
+        res.tangent =
+            (u * tquv.tv.v - v * tquv.tu.u) / (tquv.tu.u * tquv.tv.v - tquv.tu.v * tquv.tv.u);
 
         res.area = n.length() / 2.0;
 
@@ -76,40 +89,36 @@ impl Triangle {
         x: Point3,
         y: Point3,
         z: Point3,
-        tx: UV,
-        ty: UV,
-        tz: UV,
-        nx: Vec3,
-        ny: Vec3,
-        nz: Vec3,
+        tquv: Tquv,
+        nquv: Nquv,
         mat: Arc<dyn Material>,
     ) -> Self {
         let q = x;
         let u = y - x;
         let v = z - x;
-        let tq = tx.clone();
-        let tu = ty - tx.clone();
-        let tv = tz - tx.clone();
-        let nq = nx;
-        let nu = ny - nx;
-        let nv = nz - nx;
+        let tq = tquv.tq.clone();
+        let tu = tquv.tu - tquv.tq.clone();
+        let tv = tquv.tv - tquv.tq.clone();
+        let nq = nquv.nq;
+        let nu = nquv.nu - nquv.nq;
+        let nv = nquv.nv - nquv.nq;
         if dot(&nq, &cross(&u, &v)) > 0.0 {
-            Triangle::new(q, u, v, tq, tu, tv, nq, nu, nv, mat)
+            Triangle::new(q, u, v, Tquv::new(tq, tu, tv), Nquv::new(nq, nu, nv), mat)
         } else {
-            Triangle::new(q, v, u, tq, tv, tu, nq, nv, nu, mat)
+            Triangle::new(q, v, u, Tquv::new(tq, tv, tu), Nquv::new(nq, nv, nu), mat)
         }
     }
 
-    pub fn set_single_uv(&mut self, uv: UV) {
-        self.tq = uv;
-        self.tu = UV::default();
-        self.tv = UV::default();
-    }
+    // pub fn set_single_uv(&mut self, uv: UV) {
+    //     self.tquv.tq = uv;
+    //     self.tquv.tu = UV::default();
+    //     self.tquv.tv = UV::default();
+    // }
 
     fn set_bounding_box(&mut self) {
-        let bbox_diagonal1 = AABB::new_points(self.q, self.q + self.u);
-        let bbox_diagonal2 = AABB::new_points(self.q, self.q + self.v);
-        self.bbox = AABB::new_merge(&bbox_diagonal1, &bbox_diagonal2);
+        let bbox_diagonal1 = Aabb::new_points(self.q, self.q + self.u);
+        let bbox_diagonal2 = Aabb::new_points(self.q, self.q + self.v);
+        self.bbox = Aabb::new_merge(&bbox_diagonal1, &bbox_diagonal2);
     }
 
     fn is_interior(a: f64, b: f64, rec: &mut HitRecord) -> bool {
@@ -152,9 +161,8 @@ impl Hittable for Triangle {
             return false;
         }
 
-        let uv = self.tq.clone() + self.tu.clone() * alpha + self.tv.clone() * beta;
-        let normal =
-            unit_vector(&(self.nq.clone() + self.nu.clone() * alpha + self.nv.clone() * beta));
+        let uv = self.tquv.tq.clone() + self.tquv.tu.clone() * alpha + self.tquv.tv.clone() * beta;
+        let normal = unit_vector(&(self.nquv.nq + self.nquv.nu * alpha + self.nquv.nv * beta));
 
         let tangent = unit_vector(&(self.tangent - normal * dot(&self.tangent, &normal)));
         let bitangent = cross(&normal, &tangent);
@@ -165,7 +173,7 @@ impl Hittable for Triangle {
             return false;
         }
 
-        if self.mat.check_alpha_mapping() == true {
+        if self.mat.check_alpha_mapping() {
             let stop_p = self.mat.get_alpha_mapping(alpha, beta);
             if random_double() < stop_p {
                 return false;
@@ -185,7 +193,7 @@ impl Hittable for Triangle {
         true
     }
 
-    fn bounding_box(&self) -> AABB {
+    fn bounding_box(&self) -> Aabb {
         self.bbox
     }
 
@@ -193,7 +201,7 @@ impl Hittable for Triangle {
         let mut rec = HitRecord::new();
         if !self.hit(
             &Ray::new(*origin, *direction),
-            &mut Interval::new(0.001, INFINITY),
+            &mut Interval::new(0.001, f64::INFINITY),
             &mut rec,
         ) {
             return 0.0;
@@ -223,41 +231,41 @@ pub struct TriangleSingle {
     v: Vec3,
     w: Vec3,
     mat: Arc<dyn Material>,
-    bbox: AABB,
+    bbox: Aabb,
     normal: Vec3,
     d: f64,
     area: f64,
 }
 
 impl TriangleSingle {
-    pub(crate) fn new(q: Point3, u: Vec3, v: Vec3, mat: Arc<dyn Material>) -> Self {
-        let mut res = Self {
-            q,
-            u,
-            v,
-            w: Vec3::default(),
-            mat,
-            bbox: AABB::default(),
-            normal: Vec3::default(),
-            d: 0.0,
-            area: 0.0,
-        };
-        let n = cross(&u, &v);
-        res.normal = unit_vector(&n);
-        res.d = dot(&res.normal, &q);
-        res.w = n / dot(&n, &n);
-
-        res.area = n.length() / 2.0;
-
-        res.set_bounding_box();
-        res
-    }
-
-    fn set_bounding_box(&mut self) {
-        let bbox_line1 = AABB::new_points(self.q, self.q + self.u);
-        let bbox_line2 = AABB::new_points(self.q, self.q + self.v);
-        self.bbox = AABB::new_merge(&bbox_line1, &bbox_line2);
-    }
+    // pub(crate) fn new(q: Point3, u: Vec3, v: Vec3, mat: Arc<dyn Material>) -> Self {
+    //     let mut res = Self {
+    //         q,
+    //         u,
+    //         v,
+    //         w: Vec3::default(),
+    //         mat,
+    //         bbox: Aabb::default(),
+    //         normal: Vec3::default(),
+    //         d: 0.0,
+    //         area: 0.0,
+    //     };
+    //     let n = cross(&u, &v);
+    //     res.normal = unit_vector(&n);
+    //     res.d = dot(&res.normal, &q);
+    //     res.w = n / dot(&n, &n);
+    //
+    //     res.area = n.length() / 2.0;
+    //
+    //     res.set_bounding_box();
+    //     res
+    // }
+    //
+    // fn set_bounding_box(&mut self) {
+    //     let bbox_line1 = Aabb::new_points(self.q, self.q + self.u);
+    //     let bbox_line2 = Aabb::new_points(self.q, self.q + self.v);
+    //     self.bbox = Aabb::new_merge(&bbox_line1, &bbox_line2);
+    // }
 
     fn is_interior(a: f64, b: f64, rec: &mut HitRecord) -> bool {
         let unit_interval = Interval::new(0.0, 1.0);
@@ -299,7 +307,7 @@ impl Hittable for TriangleSingle {
             return false;
         }
 
-        if self.mat.check_alpha_mapping() == true {
+        if self.mat.check_alpha_mapping() {
             let stop_p = self.mat.get_alpha_mapping(alpha, beta);
             if random_double() < stop_p {
                 return false;
@@ -314,7 +322,7 @@ impl Hittable for TriangleSingle {
 
         true
     }
-    fn bounding_box(&self) -> AABB {
+    fn bounding_box(&self) -> Aabb {
         self.bbox
     }
 
@@ -322,7 +330,7 @@ impl Hittable for TriangleSingle {
         let mut rec = HitRecord::new();
         if !self.hit(
             &Ray::new(*origin, *direction),
-            &mut Interval::new(0.001, INFINITY),
+            &mut Interval::new(0.001, f64::INFINITY),
             &mut rec,
         ) {
             return 0.0;

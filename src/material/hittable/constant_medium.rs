@@ -1,8 +1,6 @@
-use crate::material::hittable::aabb::AABB;
+use crate::material::Material;
+use crate::material::hittable::aabb::Aabb;
 use crate::material::hittable::{HitRecord, Hittable};
-use crate::material::texture::Texture;
-use crate::material::{Isotropic, Material};
-use crate::rtweekend::color::Color;
 use crate::rtweekend::interval::Interval;
 use crate::rtweekend::random_double;
 use crate::rtweekend::vec3::Vec3;
@@ -16,21 +14,21 @@ pub struct ConstantMedium {
 }
 
 impl ConstantMedium {
-    pub fn new(boundary: Arc<dyn Hittable>, density: f64, tex: Arc<dyn Texture>) -> ConstantMedium {
-        ConstantMedium {
-            boundary,
-            neg_inv_density: -1.0 / density,
-            phase_function: Arc::new(Isotropic::new(tex)),
-        }
-    }
-
-    pub fn new_color(boundary: Arc<dyn Hittable>, density: f64, albedo: &Color) -> ConstantMedium {
-        ConstantMedium {
-            boundary,
-            neg_inv_density: -1.0 / density,
-            phase_function: Arc::new(Isotropic::new_color(albedo)),
-        }
-    }
+    // pub fn new(boundary: Arc<dyn Hittable>, density: f64, tex: Arc<dyn Texture>) -> ConstantMedium {
+    //     ConstantMedium {
+    //         boundary,
+    //         neg_inv_density: -1.0 / density,
+    //         phase_function: Arc::new(Isotropic::new(tex)),
+    //     }
+    // }
+    //
+    // pub fn new_color(boundary: Arc<dyn Hittable>, density: f64, albedo: &Color) -> ConstantMedium {
+    //     ConstantMedium {
+    //         boundary,
+    //         neg_inv_density: -1.0 / density,
+    //         phase_function: Arc::new(Isotropic::new_color(albedo)),
+    //     }
+    // }
 }
 
 impl Hittable for ConstantMedium {
@@ -86,7 +84,7 @@ impl Hittable for ConstantMedium {
         true
     }
 
-    fn bounding_box(&self) -> AABB {
+    fn bounding_box(&self) -> Aabb {
         self.boundary.bounding_box()
     }
 }

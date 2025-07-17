@@ -3,14 +3,14 @@ use crate::{rtweekend::interval::Interval, rtweekend::vec3::Point3, rtweekend::v
 use std::ops::Add;
 
 #[derive(Clone, Copy)]
-pub struct AABB {
+pub struct Aabb {
     pub x: Interval,
     pub y: Interval,
     pub z: Interval,
 }
 
-impl AABB {
-    pub(crate) fn default() -> AABB {
+impl Aabb {
+    pub(crate) fn default() -> Aabb {
         Self {
             x: Interval::default(),
             y: Interval::default(),
@@ -19,7 +19,7 @@ impl AABB {
     }
 }
 
-impl AABB {
+impl Aabb {
     pub fn new(x: Interval, y: Interval, z: Interval) -> Self {
         let mut res = Self { x, y, z };
         res.pad_to_minimums();
@@ -49,7 +49,7 @@ impl AABB {
         }
     }
 
-    pub fn new_merge(box0: &AABB, box1: &AABB) -> Self {
+    pub fn new_merge(box0: &Aabb, box1: &Aabb) -> Self {
         Self {
             x: Interval::new_merge(&box0.x, &box1.x),
             y: Interval::new_merge(&box0.y, &box1.y),
@@ -88,38 +88,40 @@ impl AABB {
         true
     }
 
-    pub(crate) const EMPTY: AABB = AABB {
+    pub(crate) const EMPTY: Aabb = Aabb {
         x: Interval::EMPTY,
         y: Interval::EMPTY,
         z: Interval::EMPTY,
     };
 
-    pub(crate) const UNIVERSE: AABB = AABB {
-        x: Interval::UNIVERSE,
-        y: Interval::UNIVERSE,
-        z: Interval::UNIVERSE,
-    };
+    // pub(crate) const UNIVERSE: Aabb = Aabb {
+    //     x: Interval::UNIVERSE,
+    //     y: Interval::UNIVERSE,
+    //     z: Interval::UNIVERSE,
+    // };
 
     pub fn longest_axis(&self) -> usize {
         if self.x.size() > self.y.size() {
             if self.x.size() > self.z.size() { 0 } else { 2 }
+        } else if self.y.size() > self.z.size() {
+            1
         } else {
-            if self.y.size() > self.z.size() { 1 } else { 2 }
+            2
         }
     }
 }
 
-impl Add<Vec3> for AABB {
+impl Add<Vec3> for Aabb {
     type Output = Self;
     fn add(self, offset: Vec3) -> Self::Output {
         Self::new(self.x + offset.x, self.y + offset.y, self.z + offset.z)
     }
 }
 
-impl Add<AABB> for Vec3 {
-    type Output = AABB;
+impl Add<Aabb> for Vec3 {
+    type Output = Aabb;
 
-    fn add(self, bbox: AABB) -> AABB {
+    fn add(self, bbox: Aabb) -> Aabb {
         bbox + self
     }
 }

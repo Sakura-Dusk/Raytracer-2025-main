@@ -6,7 +6,7 @@ pub(crate) mod quad;
 pub(crate) mod sphere;
 pub(crate) mod triangle;
 
-use crate::material::hittable::aabb::AABB;
+use crate::material::hittable::aabb::Aabb;
 use crate::material::{Lambertian, Material};
 use crate::rtweekend::degrees_to_radians;
 use crate::rtweekend::interval::Interval;
@@ -50,10 +50,10 @@ impl HitRecord {
         v: f64,
     ) {
         let mut normal = *outward_normal;
-        if mat.check_normal_mapping() == true {
+        if mat.check_normal_mapping() {
             let fix = self.mat.get_normal_mapping(u, v);
             // println!("self normal = {} {} {}", self.normal.x, self.normal.y, self.normal.z);
-            normal = normal + fix;
+            normal += fix;
             // println!("self normal fix = {} {} {}", self.normal.x, self.normal.y, self.normal.z);
         }
 
@@ -66,7 +66,7 @@ impl HitRecord {
 pub trait Hittable: Send + Sync {
     fn hit(&self, r: &Ray, ray_t: &mut Interval, rec: &mut HitRecord) -> bool;
 
-    fn bounding_box(&self) -> AABB;
+    fn bounding_box(&self) -> Aabb;
 
     fn pdf_value(&self, _: &Point3, _: &Vec3) -> f64 {
         0.0
@@ -80,7 +80,7 @@ pub trait Hittable: Send + Sync {
 pub struct Translate {
     object: Arc<dyn Hittable>,
     offset: Vec3,
-    bbox: AABB,
+    bbox: Aabb,
 }
 
 impl Translate {
@@ -106,7 +106,7 @@ impl Hittable for Translate {
 
         true
     }
-    fn bounding_box(&self) -> AABB {
+    fn bounding_box(&self) -> Aabb {
         self.bbox
     }
 }
@@ -115,7 +115,7 @@ pub struct RotateY {
     object: Arc<dyn Hittable>,
     sin_theta: f64,
     cos_theta: f64,
-    bbox: AABB,
+    bbox: Aabb,
 }
 
 impl RotateY {
@@ -154,7 +154,7 @@ impl RotateY {
             object,
             sin_theta,
             cos_theta,
-            bbox: AABB::new_points(min, max),
+            bbox: Aabb::new_points(min, max),
         }
     }
 }
@@ -194,7 +194,7 @@ impl Hittable for RotateY {
         true
     }
 
-    fn bounding_box(&self) -> AABB {
+    fn bounding_box(&self) -> Aabb {
         self.bbox
     }
 }
